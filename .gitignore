@@ -1,0 +1,18 @@
+# A kontroller-csomag SAJÁT repóban él (bosznorbi/nitrogames), ide csak
+# véletlenül került egymás mellé. Ne kerüljön bele ebbe a repóba.
+kontroller-csomag/
+
+# Fejlesztés közben készült képernyőképek. Több száz fájl, 20 MB fölött, és
+# mind újragenerálható a játékból (a /__shot végpont írja őket).
+shots/
+
+# Függőség nincs, de ha valaki mégis telepít valamit
+node_modules/
+package-lock.json
+
+# Windows és macOS szemét
+Thumbs.db
+.DS_Store
+
+# Naplók
+*.log

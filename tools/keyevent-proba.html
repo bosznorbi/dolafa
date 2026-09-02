@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<title>Billentyű-emuláció keresztpróba</title>
+<style>
+  body { background:#12141a; color:#e6e9f0; font:14px/1.6 ui-monospace, Consolas, monospace; padding:24px; }
+  pre { background:#0d0f14; border:1px solid #333a4b; padding:14px; white-space:pre-wrap; }
+  .ok { color:#4ade80; } .bad { color:#f87171; }
+  canvas { border:1px solid #333a4b; display:block; margin:12px 0; }
+</style>
+</head>
+<body>
+<h1>Billentyű-emuláció keresztpróba</h1>
+<p>Azt méri, hogy a padről küldött szintetikus billentyűesemény kihez ér el.
+Egy valódi billentyűnél a fókuszált elemtől a <code>document</code>-en át a
+<code>window</code>-ig mindenki megkapja, pontosan egyszer.</p>
+<canvas id="cv" width="200" height="60"></canvas>
+<pre id="out">mérés...</pre>
+
+<script type="module">
+import { pads } from '../v3/src/gamepad.js';
+
+// --------------------------------------------------------------- hamis padek
+const mk = (index) => ({
+  index, id: 'usb gamepad           (Vendor: 081f Product: e401)', mapping: '',
+  connected: true,
+  buttons: Array.from({ length: 10 }, () => ({ pressed: false, value: 0 })),
+  axes: [0, 0, 0, 0],
+});
+const live = [mk(0), mk(1)];
+Object.defineProperty(navigator, 'getGamepads', {
+  configurable: true,
+  value: () => { const o = [null, null, null, null]; for (const p of live) o[p.index] = p; return o; },
+});
+
+// --------------------------------------------------------------- figyelok
+// A negy hely, ahova egy jatek billentyufigyelot szokott rakni.
+const seen = { window: [], document: [], body: [], canvas: [] };
+const cv = document.getElementById('cv');
+const listen = (name, target) => {
+  target.addEventListener('keydown', (e) => seen[name].push('down ' + e.code));
+  target.addEventListener('keyup', (e) => seen[name].push('up ' + e.code));
+};
+listen('window', window);
+listen('document', document);
+listen('body', document.body);
+listen('canvas', cv);
+
+// --------------------------------------------------------------- meres
+const out = [];
+let pass = 0, fail = 0;
+const ok = (n, c, extra) => {
+  if (c) { pass++; out.push('  ok    ' + n); }
+  else { fail++; out.push('  HIBA  ' + n + (extra ? '   >> ' + extra : '')); }
+};
+const clear = () => { for (const k in seen) seen[k].length = 0; };
+
+pads.init({ slots: 2, keyboard: true, auto: false });
+pads.update();
+
+// Az 1. jatekos padje. A slotkiosztas fugghet a sorrendtol, ezert
+// megkerdezzuk, melyik fizikai pad van az elso helyen.
+const P0 = live.find((p) => p.index === pads.info(0).index);
+
+function tap(name, idx) {
+  clear();
+  P0.buttons[idx].pressed = true; P0.buttons[idx].value = 1;
+  pads.update();
+  const down = JSON.parse(JSON.stringify(seen));
+  clear();
+  P0.buttons[idx].pressed = false; P0.buttons[idx].value = 0;
+  pads.update();
+  const up = JSON.parse(JSON.stringify(seen));
+  return { down, up };
+}
+
+// A 081f profil szerint a 9-es gomb a START. Hogy melyik billentyu tartozik
+// hozza, azt a konyvtar kiosztasabol kerdezzuk ki, ne kelljen fejben tartani.
+const START_KEY = pads.keys[0].start;
+const r = tap('start', 9);
+out.push('lenyomas:  ' + JSON.stringify(r.down));
+out.push('felengedes: ' + JSON.stringify(r.up));
+out.push('');
+
+// Alaphelyzetben ugyanaz az utvonal, mint egy valodi billentyunel: body ->
+// document -> window, mindegyik PONTOSAN egyszer.
+for (const who of ['window', 'document', 'body']) {
+  ok(who + ' megkapja a lenyomast', r.down[who].length === 1, 'kapott ' + r.down[who].length);
+  ok(who + ' megkapja a felengedest', r.up[who].length === 1, 'kapott ' + r.up[who].length);
+  ok(who + ' pontosan a ' + START_KEY + '-t kapja',
+    r.down[who][0] === 'down ' + START_KEY && r.up[who][0] === 'up ' + START_KEY,
+    JSON.stringify([r.down[who][0], r.up[who][0]]));
+}
+
+// A fokuszalatlan canvas NEM kap, es ez igy helyes: valodi billentyut sem
+// kapna. Erre valo a keyTarget.
+ok('a fokuszalatlan canvas nem kap (mint valodi billentyunel)',
+  r.down.canvas.length === 0 && r.up.canvas.length === 0,
+  JSON.stringify(r.down.canvas));
+
+// keyTarget-tel viszont megkapja, es onnan tovabb is buborekol.
+pads.init({ keyTarget: cv });
+const r2 = tap('start', 9);
+ok('keyTarget: a canvas megkapja', r2.down.canvas.length === 1, 'kapott ' + r2.down.canvas.length);
+ok('keyTarget: onnan is felbuborekol a document-re', r2.down.document.length === 1);
+ok('keyTarget: es a window-ra is', r2.down.window.length === 1);
+ok('keyTarget: a body is megkapja, mert ose a canvasnak', r2.down.body.length === 1,
+  'body kapott ' + r2.down.body.length);
+pads.init({ keyTarget: null });
+
+// A negy iranygomb kulon billentyut ad a ket jatekosnak.
+const P1 = live.find((p) => p.index === pads.info(1).index);
+clear();
+P0.axes[0] = -1; P1.axes[1] = 1;
+pads.update();
+const dirs = seen.document.slice();
+ok('ket kulon jatekos ket kulon billentyut ad',
+  dirs.length === 2 && dirs.includes('down KeyA') && dirs.includes('down ArrowDown'),
+  JSON.stringify(dirs));
+P0.axes[0] = 0; P1.axes[1] = 0;
+pads.update();
+
+out.push('');
+out.push((fail ? 'BUKOTT: ' : 'RENDBEN: ') + pass + ' jo, ' + fail + ' hibas');
+const el = document.getElementById('out');
+el.textContent = out.join('\n');
+el.className = fail ? 'bad' : 'ok';
+window.__proba = { pass, fail, text: out.join('\n') };
+</script>
+</body>
+</html>

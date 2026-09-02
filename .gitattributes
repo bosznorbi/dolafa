@@ -1,0 +1,7 @@
+# A sorvégeket a git intézi.
+* text=auto
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Bináris, ne próbálja szövegként kezelni.
+*.png binary
