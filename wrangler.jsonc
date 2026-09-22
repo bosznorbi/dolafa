@@ -1,0 +1,27 @@
+{
+  // DOL A FA -> favago.bosz.dev
+  //
+  // A kitett mappat a build.mjs allitja ossze (v1, v2, v3 + nyitolap), ezert
+  // a Cloudflare build parancsa: node build.mjs
+  //
+  // A dist/ nincs verziokezelve, minden elesitesnel ujra keszul.
+  "name": "favago",
+  "compatibility_date": "2026-09-22",
+
+  "assets": {
+    "directory": "./dist",
+
+    // A "/v1" cim is mukodjon, ne csak a "/v1/". Ez a kettot egymasra hozza.
+    "html_handling": "auto-trailing-slash",
+
+    // Ismeretlen cimen sima 404, nem az egyik valtozat toltodik be helyette.
+    "not_found_handling": "none"
+  },
+
+  // A cim itt all, nem a Cloudflare feluleten kattintgatva. Igy az elesites
+  // maga rendeli hozza, es a beallitas a repoban lathato. A "custom_domain"
+  // a DNS rekordot es a HTTPS tanusitvanyt is elintezi.
+  "routes": [
+    { "pattern": "favago.bosz.dev", "custom_domain": true }
+  ]
+}

@@ -16,3 +16,10 @@ Thumbs.db
 
 # Naplók
 *.log
+
+# A kitett csomag. A build.mjs allitja ossze minden elesiteskor, tehat
+# nincs ertelme verziokezelni.
+dist/
+
+# Wrangler helyi allapota
+.wrangler/
