@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="hu">
+<head>
+<meta charset="utf-8">
+<!--
+  viewport-fit=cover: a kivagott (notch) telefonokon a jatek a teljes
+  kepernyot hasznalja, a gombok pedig a safe-area-n belul maradnak.
+  user-scalable=no: egy jatekban a ket ujjas nagyitas csak zavar.
+-->
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>DŐL A FA v4 - mobil</title>
+<meta name="theme-color" content="#0a0806">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<!--
+  Kezdokepernyore teve alkalmazaskent, fekve es teljes kepernyon indul.
+  iPhone-on ez az egyetlen ut a teljes kepernyohoz, mert a Safari egy sima
+  weboldalnak nem adja meg.
+-->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="DŐL A FA">
+<link rel="apple-touch-icon" href="favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="stage">
+    <canvas id="game" width="320" height="180"></canvas>
+  </div>
+
+  <!-- Erintes-reteg: a ket terfel es a ket lebego konzol. Csak erintokepernyon
+       latszik, a szkript kapcsolja be. -->
+  <div id="erintes" aria-hidden="true">
+    <div class="zona bal"></div>
+    <div class="zona jobb"></div>
+    <div class="bot" id="bot0"><div class="talp"></div><div class="fej"></div></div>
+    <div class="bot" id="bot1"><div class="talp"></div><div class="fej"></div></div>
+  </div>
+
+  <!-- Sarokgombok. Mindegyik ugyanazt a billentyut kuldi, mint amit a
+       feliratuk jelent, tehat a jatek szamara nincs kulonbseg. -->
+  <nav id="gombok" aria-label="Vezérlés">
+    <div class="csoport">
+      <button type="button" data-kod="KeyZ" aria-label="Varázsmód">Z</button>
+      <button type="button" data-kod="KeyM" aria-label="Hang">M</button>
+    </div>
+    <div class="csoport">
+      <button type="button" data-kod="Space">START</button>
+      <button type="button" id="fektet" aria-label="Teljes képernyő fekve" hidden>FEKTET</button>
+    </div>
+  </nav>
+
+  <!-- Allo telefonon. -->
+  <div id="forgasd" role="dialog" aria-live="polite">
+    <div class="ikon" aria-hidden="true"></div>
+    <div><strong>Fordítsd el a telefont.</strong><br>A játék fekve megy, két hüvelykujjal.</div>
+    <button type="button" id="fektet2" hidden>TELJES KÉPERNYŐ FEKVE</button>
+    <!-- Ahol a lap nem kerhet teljes kepernyot (iPhone Safari), ott ez a
+         tanacs marad: kezdokepernyorol inditva nincs bongeszokeret. -->
+    <p id="otthon" hidden>Teljes képernyőhöz tedd a kezdőképernyőre:<br>Megosztás, majd Kezdőképernyőhöz adás.</p>
+  </div>
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

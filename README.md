@@ -11,18 +11,24 @@ Egy meccs kb. **50-65 másodperc** (best of 5).
 Nincs telepítés és nincs regisztráció, böngészőben fut. Egy billentyűzeten két
 ember játszik, de gép elleni bot is van, tehát egyedül is kipróbálható.
 
-## Három változat
+## Négy változat
 
-Mindhárom él, és mindegyik külön címen érhető el.
+Mind él, és mindegyik külön címen érhető el.
 
 | | Cím | Mi ez |
 |---|---|---|
-| **v2** | [favago.bosz.dev](https://favago.bosz.dev) | ez szól a puszta címen: a v1 plusz `Z` varázsmód, tíz választható pályavilággal |
+| **v2** | [favago.bosz.dev](https://favago.bosz.dev) | ez szól a puszta címen gépről: a v1 plusz `Z` varázsmód, tíz választható pályavilággal |
+| **v4** | [favago.bosz.dev/v4](https://favago.bosz.dev/v4) | a v2 érintéses irányítással, telefonra: a puszta cím érintőképernyőről ide visz |
 | **v1** | [favago.bosz.dev/v1](https://favago.bosz.dev/v1) | az első kész játék, egy pályavilággal |
 | **v3** | [favago.bosz.dev/v3](https://favago.bosz.dev/v3) | a v2 plusz két USB SNES kontroller támogatása |
 
 Az alapértelmezett változatnak szándékosan egyetlen címe van. Aki `/v2`-t üt be,
-azt egy átirányítás viszi a tiszta címre.
+azt egy átirányítás viszi a tiszta címre. A puszta cím nyitólapja dönti el, hogy
+érintőképernyőről jött-e a látogató: ha igen, a v4-et kapja, ha nem, a v2-t.
+A `?asztali` a címben gépi változatot kér telefonon is.
+
+Mindegyik külön mappa a repóban, saját README-vel ([v2](v2/README.md),
+[v3](v3/README.md), [v4](v4/README.md)).
 
 Mindegyik külön mappa a repóban, saját README-vel ([v2](v2/README.md),
 [v3](v3/README.md)). Egyik sem érinti a korábbi változat kódját: ha az újban

@@ -1,0 +1,205 @@
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #0a0806;
+  background-image:
+    radial-gradient(ellipse 90% 70% at 50% 45%, #241a12 0%, #0f0b08 55%, #060403 100%);
+  font-family: ui-monospace, "Cascadia Mono", Consolas, monospace;
+  color: #c8b89a;
+
+  /* Telefonon a lap ne gorduljon, ne nagyitson, ne jeloljon ki szoveget:
+     minden erintes a jateke. */
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  -webkit-touch-callout: none;
+}
+
+/* A dvh a bongeszo cimsoravat is figyelembe veszi, ami telefonon be- es
+   kicsuszik. A sima 100vh alatt egy csik kilogna. */
+body { height: 100dvh; }
+
+#stage {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Teljes kepernyo a bongeszon belul: a lehetseges legnagyobb nagyitas,
+   keret nelkul. */
+#game {
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  display: block;
+  background: #1b2a17;
+  box-shadow: 0 0 90px rgba(255, 120, 40, 0.08);
+}
+
+/* ------------------------------------------------------------ erintes */
+
+/* Az erintes-reteg csak erintokepernyon (vagy ?erintes cimmel) latszik.
+   Egeres gepen a v4 pontosan ugy nez ki es viselkedik, mint a v2. */
+#erintes, #gombok, #forgasd { display: none; }
+
+#erintes {
+  position: fixed;
+  inset: 0;
+  z-index: 5;
+  touch-action: none;
+}
+body.erintes #erintes { display: block; }
+
+/* A ket terfel. Lathatatlan, csak az ujjat fogadja. A robot terfelen jatek
+   kozben nincs konzol, de a koppintas (szunet) ott is megy, ezert nem
+   kapcsoljuk ki: a szkript donti el, mit kezd az erintessel. */
+.zona {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+}
+.zona.bal { left: 0; }
+.zona.jobb { right: 0; }
+
+/* A lebego konzol: talp es fej. Ott jelenik meg, ahova az ujj leer. */
+.bot {
+  position: absolute;
+  width: 112px;
+  height: 112px;
+  margin: -56px 0 0 -56px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.10s ease;
+}
+.bot.el { opacity: 1; }
+
+.bot .talp {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 224, 138, 0.28);
+  background: rgba(255, 224, 138, 0.05);
+}
+
+.bot .fej {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
+  border-radius: 50%;
+  background: rgba(255, 224, 138, 0.30);
+  border: 2px solid rgba(255, 224, 138, 0.55);
+  will-change: transform;
+}
+
+/* ------------------------------------------------------------ gombok */
+
+/* Felso sav a sarkokban. A safe-area a kivagott (notch) telefonok miatt
+   kell fekvo helyzetben: ott a kepernyo szele nem lathato. */
+#gombok {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 6;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  padding: max(8px, env(safe-area-inset-top))
+           max(10px, env(safe-area-inset-right))
+           0
+           max(10px, env(safe-area-inset-left));
+  pointer-events: none;
+}
+body.erintes #gombok { display: flex; }
+
+#gombok .csoport { display: flex; gap: 8px; }
+
+#gombok button {
+  pointer-events: auto;
+  min-width: 44px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(200, 184, 154, 0.35);
+  border-radius: 3px;
+  background: rgba(10, 8, 6, 0.55);
+  color: #c8b89a;
+  font: 700 13px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+#gombok button:active { background: rgba(255, 224, 138, 0.18); color: #ffe08a; }
+#gombok button[hidden] { display: none; }
+
+/* A START/szunet gomb a legfontosabb, kicsit hangsulyosabb. */
+#gombok button[data-kod="Space"] {
+  border-color: rgba(255, 224, 138, 0.55);
+  color: #ffe08a;
+  min-width: 72px;
+}
+
+/* ------------------------------------------------------------ allo */
+
+/* Allo telefonon a jatek apro lenne hatalmas fekete savokkal. Egy nagy,
+   egyertelmu felirat keri az elforgatast, es a fektetes gomb is itt van. */
+#forgasd {
+  position: fixed;
+  inset: 0;
+  z-index: 7;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  padding: 24px;
+  text-align: center;
+  background: rgba(6, 4, 3, 0.86);
+  color: #c8b89a;
+  font-size: 15px;
+  line-height: 1.6;
+}
+body.erintes.allo #forgasd { display: flex; }
+
+#forgasd .ikon {
+  width: 54px;
+  height: 90px;
+  border: 3px solid rgba(255, 224, 138, 0.7);
+  border-radius: 8px;
+  animation: forog 2.2s ease-in-out infinite;
+}
+@keyframes forog {
+  0%, 30%   { transform: rotate(0deg); }
+  60%, 100% { transform: rotate(90deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  #forgasd .ikon { animation: none; transform: rotate(90deg); }
+}
+
+#forgasd strong { color: #ffe08a; font-size: 18px; }
+
+#forgasd button {
+  height: 44px;
+  padding: 0 18px;
+  border: 1px solid rgba(255, 224, 138, 0.6);
+  border-radius: 3px;
+  background: rgba(255, 224, 138, 0.12);
+  color: #ffe08a;
+  font: 700 14px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
+  cursor: pointer;
+}
+#forgasd button[hidden] { display: none; }
+
+#forgasd p {
+  max-width: 32ch;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #8a7a62;
+}
+#forgasd p[hidden] { display: none; }

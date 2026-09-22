@@ -5,9 +5,11 @@
 // MIERT KELL EZ. A repo szerkezete tortenelmi okokbol egyenetlen: a v1 a
 // gyokerben lakik, a v2 es a v3 sajat mappaban. A neten viszont ez lesz belole:
 //
-//   favago.bosz.dev       ->  az alapertelmezett valtozat (v2)
+//   favago.bosz.dev       ->  az alapertelmezett valtozat (v2) gepen;
+//                             erintokepernyon a nyitolap a /v4/-re kuld
 //   favago.bosz.dev/v1/   ->  az elso kesz jatek
 //   favago.bosz.dev/v3/   ->  a ket USB kontrolleres valtozat
+//   favago.bosz.dev/v4/   ->  az erinteses, telefonos valtozat
 //   favago.bosz.dev/v2     ->  atiranyit a puszta cimre
 //
 // Az alapertelmezett valtozat CSAK a gyokerbe kerul, nem a sajat mappajaba is.
@@ -22,7 +24,7 @@
 // Az sem mellekes, hogy igy pontosan az kerul ki a netre, amit a jatek hasznal:
 // a README, a fejlesztoi eszkozok es a kepernyokepek itt maradnak.
 
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -35,7 +37,31 @@ const VALTOZATOK = [
   { nev: 'v1', honnan: ROOT, fajlok: ['index.html', 'css', 'src'] },
   { nev: 'v2', honnan: join(ROOT, 'v2'), fajlok: ['index.html', 'css', 'src', 'favicon.svg'] },
   { nev: 'v3', honnan: join(ROOT, 'v3'), fajlok: ['index.html', 'css', 'src', 'favicon.svg'] },
+  { nev: 'v4', honnan: join(ROOT, 'v4'), fajlok: ['index.html', 'css', 'src', 'favicon.svg', 'manifest.webmanifest'] },
 ];
+
+// Erintokepernyos latogato ezt kapja a puszta cimen a gepi alapertelmezett
+// helyett. Ures, ha nincs kulon mobil valtozat.
+const MOBIL = 'v4';
+
+/*
+ * Ez a par sor kerul a gyoker nyitolapjanak <head> elejere. Az erintokepernyot
+ * nem a bongeszo nevebol talalja ki, hanem abbol, hogy az elsodleges mutato
+ * "durva" (ujj) es nincs egerlebegtetes: ez telefon es tablet, de nem az
+ * erintokepernyos laptop. A ?asztali a cimben felulbiralja, teszteleshez es
+ * annak, aki megis a gepi valtozatot akarja telefonon.
+ *
+ * Azert a <head> elejen all, hogy meg a stilus es a jatek betoltese elott
+ * atiranyitson: igy a mobil latogato nem tolti le feleslegesen a gepi valtozatot.
+ */
+const MOBIL_ATIRANYITAS = `<script>
+(function(){try{
+  if(new URLSearchParams(location.search).has('asztali'))return;
+  var m=window.matchMedia;
+  if(m&&m('(pointer: coarse)').matches&&m('(hover: none)').matches)location.replace('/${MOBIL}/');
+}catch(e){}})();
+</script>
+`;
 
 // Ez a valtozat szol a puszta cimen is. Masik alapertelmezetthez elég ezt
 // az egy sort atirni.
@@ -63,6 +89,15 @@ await rm(DIST, { recursive: true, force: true });
 // hasznal, ezert barmelyik melysegbol ugyanugy mukodik.
 await masol(alap.honnan, DIST, alap.fajlok);
 console.log(`  ${ALAP} a gyokerbe (ez szol a puszta cimen)`);
+
+// A gyoker nyitolapja erintokepernyon a mobil valtozatra kuld.
+if (MOBIL) {
+  const p = join(DIST, 'index.html');
+  const html = await readFile(p, 'utf8');
+  if (!html.includes('<head>')) throw new Error('a nyitolapban nincs <head>, nincs hova tenni az atiranyitast');
+  await writeFile(p, html.replace('<head>', '<head>\n' + MOBIL_ATIRANYITAS), 'utf8');
+  console.log(`  mobil atiranyitas a gyokerben: erintokepernyo -> /${MOBIL}/`);
+}
 
 // A tobbi valtozat a sajat mappajaba.
 for (const v of VALTOZATOK) {
