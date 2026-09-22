@@ -1,65 +1,22 @@
-// Fektetes es teljes kepernyo telefonon.
+// Fekvo vagy allo: csak a keszulek allasat kerdezzuk le.
 //
-// Amit a bongeszo enged, azt megkerjuk: teljes kepernyot, es fekvo zarolast.
-// Androidon mindketto megy. iPhone-on a Safari egyiket sem adja meg egy
-// weboldalnak: ott a gomb csak annyit tehet, hogy megkeri az embert, forgassa
-// el a telefont, es a lap a lehetseges legnagyobb helyet foglalja el.
+// Teljes kepernyot es fekvo zarolast NEM kerunk. iPhone-on a bongeszo egyiket
+// sem adja meg egy weboldalnak, Androidon pedig egy gombot kellett volna
+// kitenni erte, es a jatek igy is jol elfer a bongeszokereten belul. A lap
+// annyit tesz, hogy allo telefonon megkeri az embert: forditsa el.
 //
-// A kepesseget NEM a bongeszo nevebol talaljuk ki, hanem abbol, hogy letezik-e
-// a fuggveny. Ez nem romlik el, ha egy bongeszo megvaltozik.
-
-const el = document.documentElement;
-
-/** Tud-e a bongeszo teljes kepernyot egy sima elemre. iPhone Safari: nem. */
-export function tudTeljesKepernyot() {
-  return !!(el.requestFullscreen || el.webkitRequestFullscreen);
-}
-
-/** Tud-e fekvo zarolast. Csak Android bongeszok, es csak teljes kepernyon. */
-export function tudZarolast() {
-  return !!(screen.orientation && typeof screen.orientation.lock === 'function');
-}
-
-export function teljesKepernyon() {
-  return !!(document.fullscreenElement || document.webkitFullscreenElement);
-}
+// Az allast NEM a bongeszo nevebol talaljuk ki, hanem media query-bol. Ez nem
+// romlik el, ha egy bongeszo megvaltozik.
 
 export function fekvo() {
   return window.matchMedia('(orientation: landscape)').matches;
 }
 
 /**
- * Megkeri, amit lehet. Nem dob hibat: ha valamit a bongeszo elutasit, azt
- * csondben tudomasul vesszuk, a hivo a visszateresi ertekbol latja, mi sikerult.
+ * Ertesites, ha valtozik a fekvo/allo allapot. A teljes kepernyore is
+ * figyelunk: azt a bongeszo sajat gombja (vagy asztali gepen az F11) barmikor
+ * be- es kikapcsolhatja, es olyankor mas lesz a hasznos hely.
  */
-export async function fektet() {
-  const eredmeny = { teljes: false, zarolva: false };
-
-  if (!teljesKepernyon()) {
-    const kerd = el.requestFullscreen || el.webkitRequestFullscreen;
-    if (kerd) {
-      try { await kerd.call(el, { navigationUI: 'hide' }); eredmeny.teljes = true; }
-      catch { /* elutasitva, pl. nem felhasznaloi gesztusbol hivtak */ }
-    }
-  } else {
-    eredmeny.teljes = true;
-  }
-
-  if (tudZarolast()) {
-    try { await screen.orientation.lock('landscape'); eredmeny.zarolva = true; }
-    catch { /* iOS, vagy nem teljes kepernyon: nem enged zarolni */ }
-  }
-
-  return eredmeny;
-}
-
-export async function kilep() {
-  if (tudZarolast()) { try { screen.orientation.unlock(); } catch { /* nincs mit */ } }
-  const ki = document.exitFullscreen || document.webkitExitFullscreen;
-  if (ki && teljesKepernyon()) { try { await ki.call(document); } catch { /* nincs mit */ } }
-}
-
-/** Ertesites, ha valtozik a fekvo/allo allapot vagy a teljes kepernyo. */
 export function figyel(fn) {
   window.matchMedia('(orientation: landscape)').addEventListener('change', fn);
   document.addEventListener('fullscreenchange', fn);

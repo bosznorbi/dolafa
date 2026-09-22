@@ -1,4 +1,4 @@
-// Erintes: lebego hüvelykujj-konzol, koppintas a kirajzolt elemekre, fektetes.
+// Erintes: lebego hüvelykujj-konzol es koppintas a kirajzolt elemekre.
 //
 // ELV. A kepernyo ket fele a ket jatekos terfele. Ahova a hüvelykujj leer a
 // sajat terfelen, ott jelenik meg a konzol, es az irany az elso erintesi
@@ -25,7 +25,7 @@
 
 import { H, NEZET } from './config.js';
 import { MAP, fire, erintesIrany, erintesTorol, erintesBekapcsol } from './input.js';
-import { fektet, tudTeljesKepernyot, fekvo, figyel } from './fektetes.js';
+import { fekvo, figyel } from './fektetes.js';
 import { talal } from './tapint.js';
 
 const HOLTTER = 14;         // px: ezen belul nincs irany
@@ -33,7 +33,7 @@ const KITERES = 40;         // px: a fej legfeljebb ennyire mozdul ki a talpbol
 const KOPPINTAS_MS = 300;
 const KOPPINTAS_PX = 12;
 
-let reteg, canvas, gombFektet2, otthon;
+let reteg, canvas;
 const botok = [null, null];          // oldalankent: { id, ox, oy, el, fej, irany, t0, mozgott }
 
 // Amit a jatek mond magarol minden kepkockaban.
@@ -193,18 +193,6 @@ function frissit() {
   // A jatek allapota a DOM-on is: CSS-bol es tesztbol egyarant lathato.
   document.body.dataset.jatek = allapot.state;
 
-  // Az allo-kepernyos felirat fektetes gombja: iPhone-on nincs, ott csak a
-  // szoveg marad.
-  if (gombFektet2) gombFektet2.hidden = !tudTeljesKepernyot();
-
-  // Ahol a lap nem kerhet teljes kepernyot (iPhone Safari), a bongeszo
-  // cimsorat egyetlen modon lehet eltuntetni: a kezdokepernyore teve.
-  if (otthon) {
-    const alkalmazasban = window.matchMedia('(display-mode: standalone)').matches
-      || navigator.standalone === true;
-    otthon.hidden = tudTeljesKepernyot() || alkalmazasban;
-  }
-
   // Allo telefonon a jatek apro lenne: kerjuk az elforgatast.
   const allo = !fekvo() && Math.min(window.innerWidth, window.innerHeight) < 700;
   document.body.classList.toggle('allo', allo);
@@ -243,8 +231,6 @@ export function initErintes() {
   reteg = document.getElementById('erintes');
   canvas = document.getElementById('game');
   if (!reteg || !canvas) return;
-  gombFektet2 = document.getElementById('fektet2');
-  otthon = document.getElementById('otthon');
 
   reteg.addEventListener('pointerdown', lenyom, { passive: false });
   reteg.addEventListener('pointermove', mozdul, { passive: false });
@@ -254,12 +240,6 @@ export function initErintes() {
   reteg.addEventListener('contextmenu', (e) => e.preventDefault());
   // Ha az ujj lecsuszik a kepernyorol, a bongeszo nem mindig kuld pointerup-ot.
   window.addEventListener('blur', () => { botFelvesz(0); botFelvesz(1); });
-
-  if (gombFektet2) gombFektet2.addEventListener('click', async (e) => {
-    e.preventDefault();
-    await fektet();
-    frissit();
-  });
 
   // Erintokepernyos eszkozon rogton bekapcsol. Egeres gepen alapbol nem: ott
   // a v4 ugyanaz, mint a v2. A ?erintes a cimben barhol bekapcsolja,

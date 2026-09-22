@@ -111,7 +111,8 @@ body.erintes #erintes { display: block; }
 /* ------------------------------------------------------------ allo */
 
 /* Allo telefonon a jatek apro lenne hatalmas fekete savokkal. Egy nagy,
-   egyertelmu felirat keri az elforgatast, es a fektetes gomb is itt van. */
+   egyertelmu felirat keri az elforgatast. Teljes kepernyot nem kerunk es a
+   kezdokepernyot sem ajanljuk: a lenyeg, hogy bongeszobol jatszhato legyen. */
 #forgasd {
   position: fixed;
   inset: 0;
@@ -129,39 +130,25 @@ body.erintes #erintes { display: block; }
 }
 body.erintes.allo #forgasd { display: flex; }
 
+/* A telefon egyszer balra fordul, egyszer jobbra: mindket irany jo, a jatek
+   koveti a keszuleket. Kozben visszaall allora, kulonben a ket irany
+   egyetlen folyamatos korbefordulasnak latszana. */
 #forgasd .ikon {
   width: 54px;
   height: 90px;
   border: 3px solid rgba(255, 224, 138, 0.7);
   border-radius: 8px;
-  animation: forog 2.2s ease-in-out infinite;
+  animation: forog 4.4s ease-in-out infinite;
 }
 @keyframes forog {
-  0%, 30%   { transform: rotate(0deg); }
-  60%, 100% { transform: rotate(90deg); }
+  0%, 10%   { transform: rotate(0deg); }
+  22%, 35%  { transform: rotate(-90deg); }
+  47%, 55%  { transform: rotate(0deg); }
+  67%, 80%  { transform: rotate(90deg); }
+  92%, 100% { transform: rotate(0deg); }
 }
 @media (prefers-reduced-motion: reduce) {
-  #forgasd .ikon { animation: none; transform: rotate(90deg); }
+  #forgasd .ikon { animation: none; transform: rotate(-90deg); }
 }
 
 #forgasd strong { color: #ffe08a; font-size: 18px; }
-
-#forgasd button {
-  height: 44px;
-  padding: 0 18px;
-  border: 1px solid rgba(255, 224, 138, 0.6);
-  border-radius: 3px;
-  background: rgba(255, 224, 138, 0.12);
-  color: #ffe08a;
-  font: 700 14px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
-  cursor: pointer;
-}
-#forgasd button[hidden] { display: none; }
-
-#forgasd p {
-  max-width: 32ch;
-  font-size: 13px;
-  line-height: 1.5;
-  color: #8a7a62;
-}
-#forgasd p[hidden] { display: none; }
