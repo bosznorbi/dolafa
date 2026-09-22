@@ -564,6 +564,23 @@ export function chopBlockedNow(g) {
   return hasMech('bell') && darkK(g) > 0.45;
 }
 
+/**
+ * Kor- es meccsvegen a sotetseg KIENGED.
+ *
+ * A zarokepen mar nem fut a teljes mechanika, tehat a harang sem kondul
+ * ujra - de enelkul a sotetseg BEFAGYNA azon az erteken, ahol a kor veget
+ * ert, es a gyoztes lathatatlanul futott volna be a menedekbe. A maradek
+ * idot a kivilagosodas hosszara vagjuk: a feny egy pillanat alatt
+ * visszajon, nem kell kivarni egy egesz harangszot.
+ */
+export function engedjElASotet(g, dt) {
+  if (!hasMech('bell') || !g.darkT) return;
+  const k = cfg('bell');
+  if (g.darkT > k.fadeOut) g.darkT = k.fadeOut;
+  g.darkT = Math.max(0, g.darkT - dt);
+  if (g.bellSwing > 0) g.bellSwing = Math.max(0, g.bellSwing - dt);
+}
+
 // A sotetseg allasa, hogy a kozelharc is tudjon rola. A resolveMelee nem
 // kapja meg a jatekallapotot, ezert itt tartjuk el az utolso erteket.
 let curDark = 0;

@@ -255,6 +255,12 @@ száll a kéményből. Csak ezután jön a győztes-felirat.
 Ez adja meg a játék történetét: nem az nyer, aki megöl valakit, hanem aki eléri a
 fedelet.
 
+A temetőben a harangszó **kienged**, amint eldőlt a meccs. Korábban befagyott,
+mert a zárókép alatt már nem fut a teljes mechanika, és a győztes láthatatlanul
+futott be a menedékbe. Most a fény a kivilágosodás rendes ideje alatt visszajön,
+tehát a futás végig látszik.
+
+
 **A menedék szilárd akadály**, nem lehet átmenni rajta, és nem kerül a patak partjára.
 Fair-figyelmeztetés: egyetlen, véletlen helyű akadály elvileg megtöri a középpontos
 tükrözést, tehát az egyik játékos kaphat egy kicsivel jobb fedezéket. Mivel csak a

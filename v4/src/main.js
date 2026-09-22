@@ -31,6 +31,7 @@ import {
 import { updateBot } from './bot.js';
 import {
   hasMech, resetMech, runChain, onTreeDown, onFell, updateMech, launchAll, updateFlying,
+  engedjElASotet,
 } from './mechanics.js';
 import { drawWorld } from './render.js';
 import {
@@ -468,6 +469,10 @@ function update(dt) {
   if (g.state === 'roundend' || g.state === 'matchend') {
     FX.updateParticles(dt);
     updateFloats(dt);
+    // A temetoi harangszo sotetsege itt enged ki. Enelkul befagyna, es a
+    // gyoztes lathatatlanul futna be a menedekbe: a zarokepen mar nem fut a
+    // teljes mechanika.
+    engedjElASotet(g, dt);
     // Zarokep: a MEGLEVO tuzfront zarul ossze a menedek koré, nem uj tuz jon.
     if (g.state === 'matchend' && g.stateT < CFG.outro.total) {
       updateArenaOutro(g.arena, dt, g.cabin, g.stateT / CFG.outro.total);
