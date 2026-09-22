@@ -2,7 +2,9 @@
 // Igy nincs kulso asset, a stilus garantaltan konzisztens, es a csapat
 // barmelyik elemet atirhatja anelkul, hogy a tobbihez nyulna.
 
-import { W, H, PAL, TEAM, TREE_KINDS, CURRENT, mulberry32 } from './config.js';
+import {
+  W, H, PAL, TEAM, TREE_KINDS, CURRENT, mulberry32, NEZET,
+} from './config.js';
 import { drawGlyph } from './font.js';
 import { buildDecorSprites } from './decor-sprites.js';
 import { CRITTERS, CRITTER_SLOTS } from './critters.js';
@@ -5028,15 +5030,21 @@ export function buildGlowBlob() {
   return cv;
 }
 
-export function buildVignette() {
-  const { cv, c } = makeCanvas(W, H);
-  const img = c.createImageData(W, H);
+/*
+ * A sotetedo perem a KEPERNYO szelet koveti, nem a jatekterét: kulonben a
+ * hasabokkal egyutt ket sotet fuggoleges sav kerulne a kep kozepebe. Ezert
+ * a kep olyan szeles, amilyen a vaszon, a sugar-normalast viszont tovabbra is
+ * a 320x180-as atlo adja, tehat a jatekter pontosan ugy nez ki, mint eddig.
+ */
+export function buildVignette(vw = NEZET.w) {
+  const { cv, c } = makeCanvas(vw, H);
+  const img = c.createImageData(vw, H);
   const d = img.data;
-  const cx = W / 2;
+  const cx = vw / 2;
   const cy = H / 2;
-  const maxD = Math.hypot(cx, cy);
+  const maxD = Math.hypot(W / 2, H / 2);
   for (let y = 0; y < H; y++) {
-    for (let x = 0; x < W; x++) {
+    for (let x = 0; x < vw; x++) {
       const r = Math.hypot(x - cx, (y - cy) * 1.25) / maxD;
       let a = Math.max(0, r - 0.52) * 1.9;
       a = Math.min(0.55, a);
@@ -5047,7 +5055,7 @@ export function buildVignette() {
       // eltunnek.
       const dither = (((x & 1) ^ (y & 1)) - 0.5) / 64;
       a = Math.max(0, Math.round((a + dither) * 32) / 32);
-      const i = (y * W + x) * 4;
+      const i = (y * vw + x) * 4;
       d[i] = 12; d[i + 1] = 7; d[i + 2] = 4;
       d[i + 3] = Math.round(a * 255);
     }

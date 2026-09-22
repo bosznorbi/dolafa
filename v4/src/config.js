@@ -360,3 +360,63 @@ export const lerp = (a, b, t) => a + (b - a) * t;
 // Alapertelmezes: a 0. tema (erdo). Azert ITT hivjuk, mert a tobbi modul
 // mar a betolteskor olvassa a TEAM-et es a TREE_KINDS-ot.
 applyTheme(THEMES[0], 0);
+
+// ---------------------------------------------------------------- nezet
+
+/*
+ * OLDALSO HASABOK.
+ *
+ * A jatekter mindig pontosan 320x180 marad: a palya merete, a szereplok
+ * sebessege es minden arany ehhez van hangolva, ezt nyujtani nem szabad.
+ * A mai kepernyok viszont szelesebbek 16:9-nel (egy fekvo telefon kozel
+ * 2.6:1), es ott eddig ket fekete hasab maradt a szelen.
+ *
+ * Ezt ugy toltjuk ki, hogy a VASZON lesz szelesebb, nem a jatek: a rajzolo
+ * eltolt koordinatarendszerben dolgozik, tehat a jatekter tovabbra is a
+ * 0..W savban van, a ket hasab pedig a -ox..0 es a W..W+ox savban. Oda a
+ * vilag folytatasa kerul (talaj, sziluettek, langok, szinezesek), jatekbeli
+ * esemeny viszont soha: a meccs a kozepso savban dol el.
+ *
+ * NEZET.ox a hasab szelessege vilag-pixelben, NEZET.w a teljes szelesseg.
+ * A resize() allitja, minden mas csak olvassa.
+ */
+export const MAX_OX = 90;                  // eddig toltunk ki, kb. 2.78:1
+export const NEZET = { ox: 0, w: W };
+
+/** A teljes lathato sav (a hasabokkal egyutt) egy vizszintes csikja. */
+export function teljesSav(c, y = 0, h = H) {
+  c.fillRect(-NEZET.ox, y, NEZET.w, h);
+}
+
+/**
+ * Egy W szeles hatterkep folytatasa a hasabokba. A masolat TUKROZOTT, ezert
+ * a jatekter szelen nincs varrat: a hasab elso pixeloszlopa ugyanaz, mint a
+ * jatekter utolso oszlopa. Ismetles helyett ez az egyetlen mod, amivel egy
+ * nem csempezheto textura eszrevetlenul folytathato.
+ */
+export function hasabTukor(c, kep) {
+  const ox = NEZET.ox;
+  if (ox <= 0 || !kep) return;
+  c.save();
+  c.scale(-1, 1);                          // vilag x = -helyi x
+  c.drawImage(kep, 0, 0, ox, H, 0, 0, ox, H);
+  c.restore();
+  c.save();
+  c.translate(W * 2, 0);
+  c.scale(-1, 1);                          // vilag x = 2W - helyi x
+  c.drawImage(kep, W - ox, 0, ox, H, W - ox, 0, ox, H);
+  c.restore();
+}
+
+/**
+ * Hanyszor kell megismetelni egy W szelessegben elosztott diszlet-sort, hogy
+ * a hasabokat is kitoltse. A hivo -tobb .. n+tobb kozott lepked.
+ */
+export function hasabTobblet(koz) {
+  return NEZET.ox > 0 ? Math.ceil(NEZET.ox / koz) + 1 : 0;
+}
+
+/** Negativra is helyes maradek: a hasabokban az index negativ lehet. */
+export function korbe(i, n) {
+  return ((i % n) + n) % n;
+}

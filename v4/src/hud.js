@@ -1,9 +1,27 @@
 // HUD, menu, bannerek, lebego szovegek.
 
-import { W, H, CFG, PAL, TEAM, CURRENT, clamp } from './config.js';
+import {
+  W, H, CFG, PAL, TEAM, CURRENT, clamp,
+  NEZET, teljesSav, hasabTukor, hasabTobblet, korbe,
+} from './config.js';
 import { THEMES } from './themes.js';
 import { drawText, textWidth } from './font.js';
-import { erintesVan } from './input.js';
+import { erintesVan, MAP } from './input.js';
+import { regisztral } from './tapint.js';
+
+/**
+ * Kozepre igazitott felirat, ami erintessel koppinthato is: a rajzolt szoveg
+ * korul feljegyezzuk a talalati teruletet (tapint.js). A parna azert kell,
+ * mert ujjal nem lehet pixelpontosan celozni. A betukeszlet 7 pixel magas.
+ */
+function koppinthato(c, szoveg, cx, y, opts, kod, { shift = false, parna = 6 } = {}) {
+  const sc = (opts && opts.scale) || 1;
+  drawText(c, szoveg, cx, y, Object.assign({ align: 'center' }, opts));
+  if (erintesVan()) {
+    const w = textWidth(szoveg, sc);
+    regisztral(cx - w / 2, y, w, 7 * sc, kod, { shift, parna });
+  }
+}
 import { hpFrac } from './player.js';
 
 const floats = [];
@@ -49,9 +67,11 @@ export function drawFloats(c) {
 
 export function drawHud(c, g, S) {
   c.fillStyle = 'rgba(8,5,3,0.42)';
-  c.fillRect(0, 0, W, 23);
+  // A sav a TELJES kepernyot atfogja, a nevek es a szivek viszont a jatekter
+  // szelen maradnak: igy a ket jatekos egyforma tavol van a kozeptol.
+  teljesSav(c, 0, 23);
   c.fillStyle = 'rgba(255,180,90,0.10)';
-  c.fillRect(0, 23, W, 1);
+  teljesSav(c, 23, 1);
 
   // A nevet a sideName() allitja ossze: szinnevesnel kell moge a tipus,
   // rendes nevnel (SZFINX, SÁMÁN) nem.
@@ -140,7 +160,7 @@ function fitScale(text, wanted) {
 
 function shade(c, a) {
   c.fillStyle = 'rgba(8,5,3,' + a + ')';
-  c.fillRect(0, 0, W, H);
+  teljesSav(c);
 }
 
 export function drawCountdown(c, g) {
@@ -178,8 +198,15 @@ export function drawPause(c, g) {
   c.fillRect(W / 2 - gap / 2 - bw, y, bw, 3);
   c.fillRect(W / 2 + gap / 2, y, bw, 3);
 
-  drawText(c, erintesVan() ? 'KOPPINTS = FOLYTATÁS' : 'SPACE = FOLYTATÁS', W / 2, 112, { align: 'center', color: PAL.ui });
-  drawText(c, 'ESC = KILÉPÉS', W / 2, 126, { align: 'center', color: PAL.uiDim });
+  if (erintesVan()) {
+    // Erintessel ket koppinthato felirat, egymastol tavol, hogy ne lehessen
+    // melle nyulni. A folytatas barhova koppintva is megy, a kilepes csak itt.
+    koppinthato(c, 'FOLYTATÁS', W / 2, 108, { color: PAL.ui, scale: 2 }, 'Space', { parna: 8 });
+    koppinthato(c, 'KILÉPÉS', W / 2, 136, { color: PAL.uiDim }, 'Escape', { parna: 8 });
+  } else {
+    drawText(c, 'SPACE = FOLYTATÁS', W / 2, 112, { align: 'center', color: PAL.ui });
+    drawText(c, 'ESC = KILÉPÉS', W / 2, 126, { align: 'center', color: PAL.uiDim });
+  }
 }
 
 /** Rovid korveg-bejelentes. Visszaszamlalas nincs: az a kor elejen van. */
@@ -308,17 +335,30 @@ export function drawMatchEnd(c, g, S, time) {
     drawText(c, String(left), W / 2, 140, {
       align: 'center', scale: 2, color: '#fff2c0', outline: '#3a1607', shadow: null,
     });
-    drawText(c, 'SHIFT+R = STOP', W / 2, 158, { align: 'center', color: 'rgba(150,134,110,0.9)' });
-    drawText(c, erintesVan() ? 'KOPPINTS = MENÜ' : 'SPACE = MENÜ', W / 2, 168, { align: 'center', color: 'rgba(120,104,80,0.8)' });
+    if (erintesVan()) {
+      koppinthato(c, 'STOP', W / 2, 156, { color: 'rgba(150,134,110,0.9)' }, 'KeyR', { shift: true, parna: 4 });
+      koppinthato(c, 'MENÜ', W / 2, 168, { color: 'rgba(120,104,80,0.8)' }, 'Space', { parna: 4 });
+    } else {
+      drawText(c, 'SHIFT+R = STOP', W / 2, 158, { align: 'center', color: 'rgba(150,134,110,0.9)' });
+      drawText(c, 'SPACE = MENÜ', W / 2, 168, { align: 'center', color: 'rgba(120,104,80,0.8)' });
+    }
     return;
   }
   if (t > 1.4) {
+    if (erintesVan()) {
+      // Harom koppinthato felirat, egymastol tavol. Az UJRA a legfontosabb,
+      // az nagyobb es nem villog: koppintani egy allo feliratra konnyebb.
+      koppinthato(c, 'ÚJRA', W / 2, 128, { color: '#ffd257', scale: 2 }, 'KeyR', { parna: 5 });
+      koppinthato(c, 'VÉGTELEN', W / 2, 151, { color: 'rgba(150,134,110,0.9)' }, 'KeyR', { shift: true, parna: 3 });
+      koppinthato(c, 'MENÜ', W / 2, 166, { color: 'rgba(120,104,80,0.8)' }, 'Space', { parna: 3 });
+      return;
+    }
     // Szoros sorrend: elobb az ujra, aztan a vegtelen, vegul a kilepes.
     if (Math.floor(time * 2) % 2 === 0) {
       drawText(c, 'R = ÚJRA', W / 2, 136, { align: 'center', color: '#ffd257' });
     }
     drawText(c, 'SHIFT+R = VÉGTELEN', W / 2, 146, { align: 'center', color: 'rgba(150,134,110,0.9)' });
-    drawText(c, erintesVan() ? 'KOPPINTS = MENÜ' : 'SPACE = MENÜ', W / 2, 156, { align: 'center', color: 'rgba(120,104,80,0.8)' });
+    drawText(c, 'SPACE = MENÜ', W / 2, 156, { align: 'center', color: 'rgba(120,104,80,0.8)' });
   }
 }
 
@@ -390,14 +430,14 @@ function drawMysteryBackdrop(c, time) {
     const g2 = Math.round(8 + k * 10);
     const b = Math.round(26 + k * 44);
     c.fillStyle = 'rgb(' + r + ',' + g2 + ',' + b + ')';
-    c.fillRect(0, y, W, 1);
+    teljesSav(c, y, 1);
   }
 
   // Kavargo kodsavok. Lassan usznak, tehat sosem all meg a kep.
   for (let i = 0; i < 5; i++) {
     const yy = 30 + i * 28;
     c.fillStyle = 'rgba(150,110,220,' + (0.05 + (i % 2) * 0.03).toFixed(3) + ')';
-    for (let x = 0; x < W; x += 2) {
+    for (let x = -NEZET.ox; x < W + NEZET.ox; x += 2) {
       const off = Math.sin(x * 0.02 + time * (0.4 + i * 0.12) + i) * 9
         + Math.sin(x * 0.006 - time * 0.3) * 6;
       c.fillRect(x, Math.round(yy + off), 2, 14);
@@ -429,12 +469,14 @@ function drawMysteryBackdrop(c, time) {
     [9, 10, 11, 11, 10, 9, 7, 5, 3],         // gombos (nyaloka)
     [2, 4, 6, 8, 10, 12, 12, 12, 12],        // toronyszeru
   ];
-  for (let i = 0; i < 9; i++) {
-    const sh = shapes[i % shapes.length];
-    const bx = Math.round(-6 + i * (W / 8.2) + ((i * 29) % 11));
-    const baseY = H - 2 + ((i * 13) % 4);
-    const scale = 1.6 + ((i * 7) % 5) * 0.22;
-    c.fillStyle = i % 2 ? 'rgba(8,5,16,0.92)' : 'rgba(14,9,26,0.86)';
+  const koz = W / 8.2;
+  const tobb = hasabTobblet(koz);
+  for (let i = -tobb; i < 9 + tobb; i++) {
+    const sh = shapes[korbe(i, shapes.length)];
+    const bx = Math.round(-6 + i * koz + korbe(i * 29, 11));
+    const baseY = H - 2 + korbe(i * 13, 4);
+    const scale = 1.6 + korbe(i * 7, 5) * 0.22;
+    c.fillStyle = korbe(i, 2) ? 'rgba(8,5,16,0.92)' : 'rgba(14,9,26,0.86)';
     for (let r = 0; r < sh.length; r++) {
       const hw = Math.round(sh[r] * 0.5 * scale * 0.5);
       const yy = Math.round(baseY - (sh.length - r) * 3.4);
@@ -446,7 +488,7 @@ function drawMysteryBackdrop(c, time) {
   for (let i = 0; i < 26; i++) {
     const k = i / 25;
     c.fillStyle = 'rgba(140,90,220,' + (0.30 * Math.pow(k, 1.9)).toFixed(3) + ')';
-    c.fillRect(0, H - 1 - i, W, 1);
+    teljesSav(c, H - 1 - i, 1);
   }
 }
 
@@ -456,27 +498,32 @@ export function drawMenu(c, m, S, time) {
     drawMysteryBackdrop(c, time);
   } else {
     c.drawImage(S.ground, 0, 0);
+    hasabTukor(c, S.ground);
     c.fillStyle = 'rgba(10,8,6,0.68)';
-    c.fillRect(0, 0, W, H);
+    teljesSav(c);
 
     for (let i = 0; i < 40; i++) {
       const k = i / 39;
       c.fillStyle = 'rgba(' + (PAL.glow || '255,116,32') + ',' + (0.44 * Math.pow(k, 1.8)).toFixed(3) + ')';
-      c.fillRect(0, H - 1 - i, W, 1);
+      teljesSav(c, H - 1 - i, 1);
     }
+    // A sziluett-sor ugyanazzal a kozzel fut tovabb a hasabokba: se surubb,
+    // se ritkabb nem lesz a szelen, csak hosszabb a sor.
     for (let layer = 0; layer < 2; layer++) {
       const n = layer === 0 ? 11 : 13;
-      for (let i = 0; i < n; i++) {
-        const spr = S.trees[(i * 3 + layer) % S.trees.length];
-        const x = Math.round(-8 + i * (W / (n - 1.2)) + ((i * 37 + layer * 19) % 9));
-        const y = H - (layer === 0 ? 6 : 0) - Math.round(spr.h * 0.62) + ((i * 13 + layer * 7) % 5);
+      const koz = W / (n - 1.2);
+      const tobb = hasabTobblet(koz);
+      for (let i = -tobb; i < n + tobb; i++) {
+        const spr = S.trees[korbe(i * 3 + layer, S.trees.length)];
+        const x = Math.round(-8 + i * koz + korbe(i * 37 + layer * 19, 9));
+        const y = H - (layer === 0 ? 6 : 0) - Math.round(spr.h * 0.62) + korbe(i * 13 + layer * 7, 5);
         c.globalAlpha = layer === 0 ? 0.55 : 1;
         c.drawImage(spr.sil, x, y);
         c.globalAlpha = 1;
       }
     }
     const f = S.flames;
-    for (let x = -2; x < W + 4; x += 4) {
+    for (let x = -2 - NEZET.ox; x < W + NEZET.ox + 4; x += 4) {
       const fr = (Math.floor(time * 15 + x * 0.7) % f.frames.length + f.frames.length) % f.frames.length;
       c.drawImage(f.frames[fr], x, H - f.h + 3);
     }
@@ -520,22 +567,33 @@ export function drawMenu(c, m, S, time) {
       Object.assign({ align: 'center', color: '#b0a084' }, OL));
   }
 
-  if (Math.floor(time * 2) % 2 === 0) {
-    // Erintessel a START gomb indit, ezt mondja a felirat is.
-    drawText(c, erintesVan() ? 'START' : 'SPACE', W / 2, m.z ? 157 : 143,
+  // Erintessel a START felirat maga a gomb. A talalati terulet akkor is el,
+  // amikor a villogas eppen a sotet felen van, kulonben a koppintas felet
+  // elnyelne. Nyitott sugobuborek alatt nem rajzoljuk, mert ratakarna.
+  const startY = m.z ? 157 : 143;
+  const buborek = m.z && m.info && infoAvailable(m);
+  if (erintesVan() && !buborek) {
+    const w = textWidth('START', 2);
+    regisztral(W / 2 - w / 2, startY, w, 14, 'Space', { parna: 10 });
+  }
+  if (Math.floor(time * 2) % 2 === 0 && !(erintesVan() && buborek)) {
+    drawText(c, erintesVan() ? 'START' : 'SPACE', W / 2, startY,
       Object.assign({ align: 'center', scale: 2, color: '#ffe08a' }, OL));
   }
 
   // Varazspalca: a hangszoro parja a masik also sarokban, ugyanazzal a
-  // logikaval (ikon + a hozza tartozo betu).
+  // logikaval (ikon + a hozza tartozo betu). Erintessel a betu elmarad, es
+  // az ikon maga koppinthato, boven meretezett sarokkal.
   c.drawImage(m.z ? S.wandOn : S.wandOff, 8, H - 13);
-  drawText(c, 'Z', 21, H - 14, Object.assign({ color: m.z ? '#ffe08a' : '#8a7a62' }, OL));
+  if (erintesVan()) regisztral(0, H - 26, 40, 26, 'KeyZ');
+  else drawText(c, 'Z', 21, H - 14, Object.assign({ color: m.z ? '#ffe08a' : '#8a7a62' }, OL));
 
   // A menuben mindig a rendes ikon van kint az M betuvel, tehat itt nem kell
   // a halvany jelzes: az csak jatek kozben.
   const muted = S.muted;
   c.drawImage(muted ? S.speakerMuted : S.speaker, W - 26, H - 13);
-  drawText(c, 'M', W - 13, H - 14, Object.assign({ color: muted ? '#8a7a62' : '#c8b89a' }, OL));
+  if (erintesVan()) regisztral(W - 40, H - 26, 40, 26, 'KeyM');
+  else drawText(c, 'M', W - 13, H - 14, Object.assign({ color: muted ? '#8a7a62' : '#c8b89a' }, OL));
 }
 
 /** Lassan sodrodo szikrak es egy hullamzo fenyfatyol a Z modos indokephez. */
@@ -544,7 +602,7 @@ function drawSparkles(c, time) {
   for (let b = 0; b < 3; b++) {
     const hue = (time * 26 + b * 110) % 360;
     c.fillStyle = 'hsla(' + hue.toFixed(0) + ',80%,60%,0.10)';
-    for (let x = 0; x < W; x += 2) {
+    for (let x = -NEZET.ox; x < W + NEZET.ox; x += 2) {
       const y = 26 + b * 9
         + Math.sin(x * 0.035 + time * (0.9 + b * 0.25) + b) * 7
         + Math.sin(x * 0.011 - time * 0.6) * 4;
@@ -556,7 +614,7 @@ function drawSparkles(c, time) {
     const sx = (i * 71 % 317) / 317;
     const sy = (i * 53 % 211) / 211;
     const sp = 0.25 + (i % 5) * 0.09;
-    const x = Math.round(((sx + time * sp * 0.05) % 1) * W);
+    const x = Math.round(((sx + time * sp * 0.05) % 1) * NEZET.w) - NEZET.ox;
     const y = Math.round(((sy - time * sp * 0.03) % 1 + 1) % 1 * (H - 30)) + 4;
     const tw = Math.sin(time * (2 + (i % 7) * 0.4) + i);
     if (tw < 0.1) continue;
@@ -667,9 +725,13 @@ function drawIcon(c, rows, pal, x, y, alpha) {
  */
 function drawThemeStrip(c, m, time) {
   const OL = { outline: '#140c07', shadow: null };
-  const BW = 11;
-  const BH = 15;
-  const GAP = 3;
+  // Erintessel a dobozok nagyobbak es tavolabb allnak, hogy ujjal is el
+  // lehessen talalni oket. Billentyuzetnel a szam a cel, ott elég a kicsi.
+  const uj = erintesVan();
+  const BW = uj ? 16 : 11;
+  const BH = uj ? 18 : 15;
+  const GAP = uj ? 6 : 3;
+  const ROWGAP = uj ? 2 : 1;
   const PER_ROW = 3;
   const rows = Math.ceil(THEME_GRID.length / PER_ROW);
   const y0 = 54;
@@ -679,20 +741,24 @@ function drawThemeStrip(c, m, time) {
   for (let slot = 0; slot < THEME_GRID.length; slot++) {
     const i = THEME_GRID[slot];
     const bx = x0 + (slot % PER_ROW) * (BW + GAP);
-    const by = y0 + ((slot / PER_ROW) | 0) * (BH + 1);
+    const by = y0 + ((slot / PER_ROW) | 0) * (BH + ROWGAP);
     const rnd = i === GRID_RANDOM;
     const inf = i === GRID_INFO;
     const on = inf ? !!m.info : (rnd ? m.random : (!m.random && CURRENT.index === i));
+
+    // Koppinthato: a doboz teljes felulete, kis parnaval, ami a kozokbe fer.
+    if (uj) regisztral(bx, by, BW, BH, inf ? 'KeyI' : (rnd ? 'KeyR' : 'Digit' + i), { parna: 2 });
 
     if (inf) {
       // A sugo NEM palya, tehat nem is doboz: kis KOR, benne kerdojellel.
       // A negyzetes rekesz azt sugallta, hogy ez is egy valaszthato vilag.
       const cx = bx + (BW >> 1);
       const cy = by + (BH >> 1);
+      const r = uj ? 7 : 5;
       const able = infoAvailable(m);
       const col = !able ? '#5a5548' : (on ? '#d8f0ff' : '#8e9aa4');
-      pixDisc(c, cx, cy, 5, 'rgba(14,10,7,0.78)');
-      pixRing(c, cx, cy, 5, !able ? '#3a382f'
+      pixDisc(c, cx, cy, r, 'rgba(14,10,7,0.78)');
+      pixRing(c, cx, cy, r, !able ? '#3a382f'
         : (on ? 'rgba(138,208,240,' + pulse.toFixed(2) + ')' : '#4a5660'));
       drawText(c, 'I', cx - 2, cy - 3, Object.assign({ color: col }, OL));
       continue;
@@ -706,13 +772,16 @@ function drawThemeStrip(c, m, time) {
     c.fillRect(bx, by, 1, BH);
     c.fillRect(bx + BW - 1, by, 1, BH);
 
+    // Az ikon (5 szeles) es a szam (5 szeles) vizszintesen kozepen, a szam
+    // a doboz aljahoz igazitva: igy nagyobb dobozban is a helyen marad.
+    const ix = bx + ((BW - 5) >> 1);
     drawIcon(c, rnd ? RANDOM_ICON : THEME_ICONS[i], iconColors(rnd ? -1 : i),
-      bx + 3, by + 1, on ? 1 : 0.5);
-    drawText(c, rnd ? 'R' : String(i), bx + 3, by + 7,
+      ix, by + 1, on ? 1 : 0.5);
+    drawText(c, rnd ? 'R' : String(i), ix, by + BH - 8,
       Object.assign({ color: on ? '#fff2c0' : '#9a8e7c' }, OL));
   }
 
-  const ny = y0 + rows * (BH + 1) + 4;
+  const ny = y0 + rows * (BH + ROWGAP) + 4;
   const name = m.random ? 'VÉLETLEN PÁLYA' : CURRENT.theme.name;
   drawText(c, name, W / 2, ny, Object.assign({ align: 'center', color: '#ffd257' }, OL));
 
@@ -772,7 +841,8 @@ function panel(c, S, cx, y, m, i, keys, time) {
   const side = m.sides[i];
   const random = !!(m.z && m.random);
   const team = TEAM[side.color];
-  c.drawImage(keys, Math.round(cx - keys.width / 2), y);
+  // Erintessel nincs mit mutatni a billentyukbol: a konzol a hüvelykujj.
+  if (!erintesVan()) c.drawImage(keys, Math.round(cx - keys.width / 2), y);
 
   const frame = Math.floor(time * 5.5) % 4;
   const bob = frame === 1 || frame === 3 ? 1 : 0;
@@ -792,6 +862,11 @@ function panel(c, S, cx, y, m, i, keys, time) {
     const dy = Math.round(Math.sin(time * 6) * 1);
     c.drawImage(S.chevrons.up, Math.round(cx - 2), y + 26 - dy);
     c.drawImage(S.chevrons.down, Math.round(cx - 2), y + 57 + dy);
+    // Erintessel a ket nyil koppinthato: szinvaltas fel-le, ahogy a billentyu.
+    if (erintesVan()) {
+      regisztral(cx - 10, y + 18, 20, 16, MAP[i].up);
+      regisztral(cx - 10, y + 52, 20, 16, MAP[i].down);
+    }
   }
 
   // Egyetlen sor: a SZOVEG mondja meg, ki iranyit, a SZINE pedig, melyik
@@ -805,4 +880,10 @@ function panel(c, S, cx, y, m, i, keys, time) {
   const dx = Math.round(Math.sin(time * 6) * 1);
   drawText(c, '<', cx - tw / 2 - 9 - dx, ry, Object.assign({ color: '#ffd257' }, OL));
   drawText(c, '>', cx + tw / 2 + 4 + dx, ry, Object.assign({ color: '#ffd257' }, OL));
+  // Erintessel a ket nyil koppinthato: ember vagy robot, ahogy a billentyu.
+  // A terulet boven nagyobb a jelnel, es lefele is kinyulik.
+  if (erintesVan()) {
+    regisztral(cx - tw / 2 - 9 - 10, ry - 6, 20, 20, MAP[i].left);
+    regisztral(cx + tw / 2 + 4 - 5, ry - 6, 20, 20, MAP[i].right);
+  }
 }

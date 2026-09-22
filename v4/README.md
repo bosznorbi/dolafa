@@ -25,22 +25,35 @@ számít. Nem négyirányú kereszt, hanem kör: középen kis holttér, hogy a 
 ujj ne mozgassa a figurát, és nyolc irányszelet, tehát az átlós mozgás is megy.
 Két ujj egyszerre, egymástól függetlenül.
 
+**Amit a játék kirajzol, arra koppintani lehet.** Külön gombsáv nincs: a
+rajzoló feljegyzi, hova rajzolta a koppintható elemeket ([tapint.js](src/tapint.js)),
+a koppintás pedig abban keres.
+
 | Hol | Mit csinál |
 |---|---|
 | menü, bal vagy jobb térfél | a konzol kitérése egy iránybillentyű: fel-le szín, jobbra-balra ember vagy robot |
-| menü, START gomb | meccs indítása |
+| menü, a szereplő melletti `<` `>` és a fel-le nyilak | ugyanez koppintással |
+| menü, START felirat | meccs indítása |
+| menü, varázspálca és hangszóró ikon | varázsmód, hang |
+| varázsmód, pályaválasztó dobozok, R, I | pálya, véletlen pálya, súgó (érintéssel a dobozok nagyobbak) |
 | játékban, ember térfele | mozgás |
-| játékban, koppintás bárhol | szünet, szünetben folytatás |
-| meccs végén, koppintás | vissza a menübe |
-| Z, M gomb | varázsmód, hang, ahogy a billentyűzeten |
+| játékban, koppintás bárhol | szünet |
+| szünet, FOLYTATÁS és KILÉPÉS felirat | folytatás (üres koppintással is), kilépés a menübe |
+| meccs végén, ÚJRA, VÉGTELEN, MENÜ felirat | új meccs ugyanazokkal, végtelen mód, menü (üres koppintással is) |
 
 **Játékban csak ott van konzol, ahol ember játszik.** A robot térfele nem
 reagál, tehát egy játékosnál az az oldal él, amit a menüben JÁTÉKOS-ra
 állítottál, kettőnél mindkettő. A menüben mindkét oldal szabad, mert ott dől
 el, ki játszik.
 
-A menüben a koppintás szándékosan nem indít: aki épp megfogná a konzolt és túl
-gyorsan engedi el, ne indítson meccset véletlenül. Ezért van a START gomb.
+A menüben az üres koppintás szándékosan nem indít: aki épp megfogná a konzolt
+és túl gyorsan engedi el, ne indítson meccset véletlenül. Indítani a START
+feliratra koppintva lehet. Érintéssel a menü nem mutatja a billentyű-jeleket
+(WASD, nyilak) és a Z, M betűket, mert azok ott nem jelentenek semmit.
+
+Érintéssel a játék kicsit lassabb (0,9-szeres tempó), mert kis képernyőn
+ugyanaz a sebesség gyorsabbnak hat, és a hüvelykujj sem olyan pontos, mint a
+billentyű. Ez egy szám a [main.js](src/main.js) tetején.
 
 ## Fektetés
 
@@ -56,6 +69,15 @@ kezdőképernyőre téve (Megosztás, majd Kezdőképernyőhöz adás) alkalmaz�
 böngészőkeret nélkül indul, ezt a [manifest.webmanifest](manifest.webmanifest)
 intézi. Az álló nézet felirata ezt tanácsolja ott, ahol a teljes képernyő nem
 kérhető, és eltűnik, amint már a kezdőképernyőről fut.
+
+## Szélesebb képernyő
+
+A fekvő telefon képernyője szélesebb 16:9-nél, ezért a játéktér két oldalán
+maradt hely. Oda a világ folytatása kerül, nyújtás nélkül: a 320x180-as
+játéktér középen marad, a szélső sávokba ugyanaz a talaj, sziluett és láng
+kerül. A részletek a [repó README-jében](../README.md#szélesebb-képernyő)
+vannak. A koppintás ettől ugyanúgy talál: a tapintási pontot a vászon teljes
+szélességéből számoljuk, és levonjuk a hasáb méretét.
 
 ## Hogyan van megcsinálva
 

@@ -17,6 +17,10 @@ html, body {
   user-select: none;
   -webkit-tap-highlight-color: transparent;
   -webkit-touch-callout: none;
+
+  /* Android Chrome: a lefele huzas ne frissitse a lapot, a szelrol huzas ne
+     lepjen vissza. Jatek kozben egy elcsuszott hüvelykujj kulonben kidobna. */
+  overscroll-behavior: none;
 }
 
 /* A dvh a bongeszo cimsoravat is figyelembe veszi, ami telefonon be- es
@@ -45,7 +49,7 @@ body { height: 100dvh; }
 
 /* Az erintes-reteg csak erintokepernyon (vagy ?erintes cimmel) latszik.
    Egeres gepen a v4 pontosan ugy nez ki es viselkedik, mint a v2. */
-#erintes, #gombok, #forgasd { display: none; }
+#erintes, #forgasd { display: none; }
 
 #erintes {
   position: fixed;
@@ -100,51 +104,9 @@ body.erintes #erintes { display: block; }
   will-change: transform;
 }
 
-/* ------------------------------------------------------------ gombok */
-
-/* Felso sav a sarkokban. A safe-area a kivagott (notch) telefonok miatt
-   kell fekvo helyzetben: ott a kepernyo szele nem lathato. */
-#gombok {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 6;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 8px;
-  padding: max(8px, env(safe-area-inset-top))
-           max(10px, env(safe-area-inset-right))
-           0
-           max(10px, env(safe-area-inset-left));
-  pointer-events: none;
-}
-body.erintes #gombok { display: flex; }
-
-#gombok .csoport { display: flex; gap: 8px; }
-
-#gombok button {
-  pointer-events: auto;
-  min-width: 44px;
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid rgba(200, 184, 154, 0.35);
-  border-radius: 3px;
-  background: rgba(10, 8, 6, 0.55);
-  color: #c8b89a;
-  font: 700 13px/1 ui-monospace, "Cascadia Mono", Consolas, monospace;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-#gombok button:active { background: rgba(255, 224, 138, 0.18); color: #ffe08a; }
-#gombok button[hidden] { display: none; }
-
-/* A START/szunet gomb a legfontosabb, kicsit hangsulyosabb. */
-#gombok button[data-kod="Space"] {
-  border-color: rgba(255, 224, 138, 0.55);
-  color: #ffe08a;
-  min-width: 72px;
-}
+/* Kulon gombsav nincs. Amit a jatek kirajzol, az koppinthato: a talalati
+   teruleteket a rajzolo jegyzi fel (src/tapint.js), az erintes-reteg pedig
+   abban keres. Igy nincs mit takarnia a HUD-bol. */
 
 /* ------------------------------------------------------------ allo */
 

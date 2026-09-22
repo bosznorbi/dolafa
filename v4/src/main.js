@@ -1,14 +1,25 @@
 // DOL A FA - fo ciklus es allapotgep.
 
-import { W, H, STEP, CFG, TEAM, CURRENT, applyTheme, bellRange } from './config.js';
+import {
+  W, H, STEP, CFG, TEAM, CURRENT, applyTheme, bellRange,
+  MAX_OX, NEZET, teljesSav,
+} from './config.js';
 import { THEMES } from './themes.js';
-import { initInput, onKey } from './input.js';
+import { initInput, onKey, erintesVan } from './input.js';
 import { initErintes, beallit as erintesBeallit } from './erintes.js';
+import { ujraKezd as koppinthatokUjra } from './tapint.js';
+
+/*
+ * Erintessel a jatek kicsit lassabb. Kis kepernyon ugyanaz a sebesseg
+ * gyorsabbnak hat, es a hüvelykujj sem olyan pontos, mint a billentyu.
+ * Ez az egy szam allitja: 1 a gepi tempo.
+ */
+const TEMPO_ERINTES = 0.9;
 import {
   initAudio, sfx, setFireLevel, toggleMute, isMuted, setMusicPaused, setMusicTempo,
   setMusicTrack, setHazardAmbience, setAllPaused, setChopMaterial, setFanfare,
 } from './audio.js';
-import { buildAll } from './sprites.js';
+import { buildAll, buildVignette } from './sprites.js';
 import {
   makeArena, updateArena, updateArenaOutro, beginOutro, inFire, fireProximity, spawnPoints,
 } from './arena.js';
@@ -745,8 +756,15 @@ function update(dt) {
 function draw(time) {
   g.clock = time;
   S.muted = isMuted();
+  // A koppinthato teruletek listaja minden kepkockaban ujraepul a rajzolasbol.
+  koppinthatokUjra();
+
+  // A jatekter a vaszon KOZEPERE kerul, a ket szelen marado hasabba pedig a
+  // rajzolok a vilag folytatasat festik. A jatek maga 0..W kozott marad, tehat
+  // egyetlen kepkockan sem kell tudnia a hasabokrol.
+  c.setTransform(1, 0, 0, 1, NEZET.ox, 0);
   c.fillStyle = '#0a0806';
-  c.fillRect(0, 0, W, H);
+  teljesSav(c);
 
   if (g.state === 'menu') {
     // A menuben a rendes hangszoro-ikon mutatja az allapotot, tehat ide
@@ -900,15 +918,31 @@ onKey((code, shift) => {
 // ---------------------------------------------------------------- ciklus
 
 function resize() {
-  // Szeltol szelig: toredek nagyitas, hogy F11 alatt tenyleg kitoltse a
-  // kepernyot. 16:9 monitoron ez amugy is egesz szamu szorzo.
-  //
   // A also korlat NEM elhagyhato: betolteskor vagy rejtett lapon az
   // innerWidth/innerHeight lehet 0, es akkor 0 pixeles lenne a canvas.
   const vw = window.innerWidth || document.documentElement.clientWidth || W;
   const vh = window.innerHeight || document.documentElement.clientHeight || H;
-  const s = Math.max(1, Math.min(vw / W, vh / H));
-  canvas.style.width = Math.round(W * s) + 'px';
+
+  // A JATEKTER 16:9 marad, nyujtani nem szabad. A kepernyo tobbi reszet a
+  // vilag folytatasa tolti ki: ennyivel szelesebb a vaszon ket oldalt.
+  // MAX_OX felett (kb. 2.78:1) marad egy keskeny fekete csik, de odaig
+  // minden fekvo telefon es minden szeles monitor kitolt.
+  const ox = Math.max(0, Math.min(MAX_OX, Math.round(((vw / vh) * H - W) / 2)));
+  if (ox !== NEZET.ox) {
+    NEZET.ox = ox;
+    NEZET.w = W + ox * 2;
+    canvas.width = NEZET.w;
+    // A vaszon meretenek allitasa a rajzolo MINDEN beallitasat visszaejti
+    // alaphelyzetbe, tehat a pixeles nagyitast ujra be kell kapcsolni.
+    c.imageSmoothingEnabled = false;
+    // A sotetedo perem a kepernyo szelehez igazodik, tehat ujra kell rajzolni.
+    S.vignette = buildVignette(NEZET.w);
+  }
+
+  // Szeltol szelig: toredek nagyitas, hogy F11 alatt tenyleg kitoltse a
+  // kepernyot.
+  const s = Math.max(1, Math.min(vw / NEZET.w, vh / H));
+  canvas.style.width = Math.round(NEZET.w * s) + 'px';
   canvas.style.height = Math.round(H * s) + 'px';
 }
 window.addEventListener('resize', resize);
@@ -946,8 +980,9 @@ let clock = 0;
 let lastError = null;
 
 function drawError(msg) {
+  c.setTransform(1, 0, 0, 1, NEZET.ox, 0);
   c.fillStyle = 'rgba(20,8,6,0.92)';
-  c.fillRect(0, 0, W, H);
+  teljesSav(c);
   drawText(c, 'HIBA A RAJZOLÁSBAN', W / 2, 60, {
     align: 'center', scale: 2, color: '#ff6a4a', outline: '#2a0d06', shadow: null,
   });
@@ -961,7 +996,7 @@ function frame(now) {
   last = now;
   if (dt > 0.25) dt = 0.25;
   clock += dt;
-  acc += dt;
+  acc += dt * (erintesVan() ? TEMPO_ERINTES : 1);
   try {
     let guard = 0;
     while (acc >= STEP && guard++ < 8) {

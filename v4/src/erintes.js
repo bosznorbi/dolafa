@@ -1,4 +1,4 @@
-// Erintes: lebego hüvelykujj-konzol, koppintas, sarokgombok, fektetes.
+// Erintes: lebego hüvelykujj-konzol, koppintas a kirajzolt elemekre, fektetes.
 //
 // ELV. A kepernyo ket fele a ket jatekos terfele. Ahova a hüvelykujj leer a
 // sajat terfelen, ott jelenik meg a konzol, es az irany az elso erintesi
@@ -6,30 +6,35 @@
 // kozepen, hogy a nyugalmi ujj ne mozgassa a figurat, es nyolc iranyszelettel,
 // tehat az atlos mozgas is megy. Ket ujj egyszerre, egymastol fuggetlenul.
 //
-// MENUBEN ugyanez a konzol navigal: egy kiteres = egy iranybillentyu az adott
-// oldalon (fel-le szin, jobbra-balra ember vagy robot), ahogy a billentyuzeten.
-// A meccset a START gomb inditja, nem a koppintas: aki eppen megfogna a konzolt
-// es tul gyorsan elengedi, ne inditson el veletlenul semmit.
+// KOPPINTAS. Nincs kulon gombsav: amit a jatek kirajzol, az koppinthato. A HUD
+// feljegyzi, hova rajzolta a START-ot, a varazspalcat, a hangszorot, a
+// palyavalaszto dobozait, a FOLYTATAS-t es a KILEPES-t (tapint.js), a
+// koppintas pedig abban keres, es a talalt elem billentyujet kuldi a jateknak.
+// Ha a koppintas nem talal semmit: jatekban szunet, szunetben folytatas, a
+// meccs vegen vissza a menube. A menuben az ures koppintas nem csinal semmit,
+// ott a START felirat indit.
 //
-// JATEKBAN csak annak az oldalnak van konzolja, ahol ember jatszik. A robot
-// terfele nem reagal. A koppintas barhol szunetel es folytat.
+// MENUBEN a konzol is navigal: egy kiteres = egy iranybillentyu az adott
+// oldalon (fel-le szin, jobbra-balra ember vagy robot). De ugyanez koppintassal
+// is megy a kirajzolt nyilakon.
 //
-// Pointer Events-et hasznalunk, nem touch eventeket: ugyanaz a kod kezeli az
-// erintest es az egeret, tehat gepen egerrel is kiprobalhato a /v4/.
+// JATEKBAN csak annak az oldalnak van konzolja, ahol ember jatszik.
+//
+// Pointer Events-et hasznalunk: ugyanaz a kod kezeli az erintest es az egeret,
+// tehat gepen egerrel is kiprobalhato a /v4/?erintes.
 
+import { H, NEZET } from './config.js';
 import { MAP, fire, erintesIrany, erintesTorol, erintesBekapcsol } from './input.js';
-import { fektet, tudTeljesKepernyot, teljesKepernyon, fekvo, figyel } from './fektetes.js';
+import { fektet, tudTeljesKepernyot, fekvo, figyel } from './fektetes.js';
+import { talal } from './tapint.js';
 
 const HOLTTER = 14;         // px: ezen belul nincs irany
 const KITERES = 40;         // px: a fej legfeljebb ennyire mozdul ki a talpbol
-const KOPPINTAS_MS = 260;
+const KOPPINTAS_MS = 300;
 const KOPPINTAS_PX = 12;
 
-// A menuben a konzol iranyai erre a ket oldali kiosztasra fordulnak.
-const OLDAL_KOD = MAP;
-
-let reteg, zonak, gombSpace, gombFektet, gombFektet2, otthon;
-const botok = [null, null];          // oldalankent: { id, ox, oy, el, fej, irany, t0 }
+let reteg, canvas, gombFektet2, otthon;
+const botok = [null, null];          // oldalankent: { id, ox, oy, el, fej, irany, t0, mozgott }
 
 // Amit a jatek mond magarol minden kepkockaban.
 const allapot = {
@@ -73,22 +78,32 @@ function oldalSzabad(i) {
   return false;
 }
 
+/** Kepernyo-pixel -> a canvas sajat 320x180-as koordinatai. */
+function canvasPont(x, y) {
+  const r = canvas.getBoundingClientRect();
+  if (!r.width || !r.height) return null;
+  // A vaszon szelesebb lehet a jatekternel: a hasab merete kivonando, hogy a
+  // jatekter bal szele legyen a 0.
+  return [(x - r.left) * (NEZET.w / r.width) - NEZET.ox, (y - r.top) * (H / r.height)];
+}
+
 // ------------------------------------------------------------ konzol
 
 function botLetesz(i, id, x, y) {
   const el = reteg.querySelector('#bot' + i);
   el.style.left = x + 'px';
   el.style.top = y + 'px';
-  el.classList.add('el');
   const fej = el.querySelector('.fej');
   fej.style.transform = 'translate(0px, 0px)';
+  // A konzol rajza csak akkor jelenik meg, ha az ujj el is mozdul: egy sima
+  // koppintasnal (START, nyilak) nem villan fel feleslegesen.
   botok[i] = { id, ox: x, oy: y, el, fej, irany: null, t0: performance.now(), mozgott: false };
 }
 
 function botMozgat(b, i, x, y) {
   let dx = x - b.ox, dy = y - b.oy;
   const r = Math.hypot(dx, dy);
-  if (r > KOPPINTAS_PX) b.mozgott = true;
+  if (r > KOPPINTAS_PX && !b.mozgott) { b.mozgott = true; b.el.classList.add('el'); }
   if (r > KITERES) { dx *= KITERES / r; dy *= KITERES / r; }
   b.fej.style.transform = `translate(${dx.toFixed(1)}px, ${dy.toFixed(1)}px)`;
 
@@ -98,7 +113,7 @@ function botMozgat(b, i, x, y) {
     const uj = foIrany(dx, dy);
     if (uj !== b.irany) {
       b.irany = uj;
-      if (uj) fire(OLDAL_KOD[i][uj]);
+      if (uj) fire(MAP[i][uj]);
     }
     return;
   }
@@ -154,41 +169,36 @@ function felenged(e) {
   if (i < 0) return;
   const b = botok[i];
   const rovid = performance.now() - b.t0 < KOPPINTAS_MS;
+  const x = b.ox, y = b.oy;
 
-  if (b.nema) botok[i] = null; else botFelvesz(i);
+  botFelvesz(i);
 
-  // Koppintas: jatekban szunet, szunetben folytatas, a meccs vegen vissza.
-  // A menuben szandekosan nem csinal semmit, ott a START gomb indit.
-  if (rovid && !b.mozgott && allapot.state !== 'menu') fire('Space');
+  if (!rovid || b.mozgott) return;
+
+  /*
+   * Koppintas. Eloszor a kirajzolt elemek: ha a koppintas eltalal valamit, ami
+   * a HUD szerint koppinthato, annak a billentyuje megy a jateknak. Ha nem
+   * talal semmit, jatekban szunet, szunetben folytatas, meccs vegen menu.
+   * A menuben az ures koppintas szandekosan nem csinal semmit.
+   */
+  const p = canvasPont(x, y);
+  const r = p && talal(p[0], p[1]);
+  if (r) { fire(r.kod, r.shift); return; }
+  if (allapot.state !== 'menu') fire('Space');
 }
 
-// ------------------------------------------------------------ gombok
+// ------------------------------------------------------------ allapot
 
-const CIMKE = {
-  menu: 'START',
-  countdown: 'II',
-  playing: 'II',
-  roundend: 'II',
-  paused: 'TOVÁBB',
-  matchend: 'MENÜ',
-};
-
-function gombokFrissit() {
-  if (gombSpace) gombSpace.textContent = CIMKE[allapot.state] || 'OK';
+function frissit() {
   // A jatek allapota a DOM-on is: CSS-bol es tesztbol egyarant lathato.
   document.body.dataset.jatek = allapot.state;
 
-  // A fektetes gomb csak ott latszik, ahol tud is valamit.
-  if (gombFektet) {
-    const kell = tudTeljesKepernyot() && !teljesKepernyon();
-    gombFektet.hidden = !kell;
-  }
-  // Az allo-kepernyos feliraton is: iPhone-on nincs, ott csak a szoveg marad.
+  // Az allo-kepernyos felirat fektetes gombja: iPhone-on nincs, ott csak a
+  // szoveg marad.
   if (gombFektet2) gombFektet2.hidden = !tudTeljesKepernyot();
 
   // Ahol a lap nem kerhet teljes kepernyot (iPhone Safari), a bongeszo
-  // cimsorat egyetlen modon lehet eltuntetni: a kezdokepernyore teve. Ezt
-  // tanacsoljuk, de csak amig nem onnan fut, mert akkor mar nincs mit.
+  // cimsorat egyetlen modon lehet eltuntetni: a kezdokepernyore teve.
   if (otthon) {
     const alkalmazasban = window.matchMedia('(display-mode: standalone)').matches
       || navigator.standalone === true;
@@ -198,27 +208,6 @@ function gombokFrissit() {
   // Allo telefonon a jatek apro lenne: kerjuk az elforgatast.
   const allo = !fekvo() && Math.min(window.innerWidth, window.innerHeight) < 700;
   document.body.classList.toggle('allo', allo);
-
-  // Jatekban a robot oldala nem fogad ujjat.
-  for (let i = 0; i < 2; i++) {
-    if (zonak[i]) zonak[i].classList.toggle('tilos', !oldalSzabad(i));
-  }
-}
-
-// ------------------------------------------------------------ publikus
-
-/**
- * A jatek ezzel mondja el minden kepkockaban, hol tart. Olcso: csak akkor
- * nyul a DOM-hoz, ha valami valtozott.
- */
-export function beallit({ state, emberek }) {
-  let valtozott = false;
-  if (state && state !== allapot.state) { allapot.state = state; valtozott = true; csoportFigyel(state); }
-  if (emberek && (emberek[0] !== allapot.emberek[0] || emberek[1] !== allapot.emberek[1])) {
-    allapot.emberek = [!!emberek[0], !!emberek[1]];
-    valtozott = true;
-  }
-  if (valtozott) gombokFrissit();
 }
 
 /*
@@ -234,12 +223,26 @@ function csoportFigyel(state) {
   if (cs !== elozoCsoport) { elozoCsoport = cs; botFelvesz(0); botFelvesz(1); }
 }
 
+// ------------------------------------------------------------ publikus
+
+/**
+ * A jatek ezzel mondja el minden kepkockaban, hol tart. Olcso: csak akkor
+ * nyul a DOM-hoz, ha valami valtozott.
+ */
+export function beallit({ state, emberek }) {
+  let valtozott = false;
+  if (state && state !== allapot.state) { allapot.state = state; valtozott = true; csoportFigyel(state); }
+  if (emberek && (emberek[0] !== allapot.emberek[0] || emberek[1] !== allapot.emberek[1])) {
+    allapot.emberek = [!!emberek[0], !!emberek[1]];
+    valtozott = true;
+  }
+  if (valtozott) frissit();
+}
+
 export function initErintes() {
   reteg = document.getElementById('erintes');
-  if (!reteg) return;
-  zonak = [reteg.querySelector('.zona.bal'), reteg.querySelector('.zona.jobb')];
-  gombSpace = document.querySelector('[data-kod="Space"]');
-  gombFektet = document.getElementById('fektet');
+  canvas = document.getElementById('game');
+  if (!reteg || !canvas) return;
   gombFektet2 = document.getElementById('fektet2');
   otthon = document.getElementById('otthon');
 
@@ -247,29 +250,20 @@ export function initErintes() {
   reteg.addEventListener('pointermove', mozdul, { passive: false });
   reteg.addEventListener('pointerup', felenged);
   reteg.addEventListener('pointercancel', felenged);
+  // Hosszan nyomva tartott ujjra Android Chrome helyi menut dobna fel.
+  reteg.addEventListener('contextmenu', (e) => e.preventDefault());
   // Ha az ujj lecsuszik a kepernyorol, a bongeszo nem mindig kuld pointerup-ot.
   window.addEventListener('blur', () => { botFelvesz(0); botFelvesz(1); });
 
-  // Sarokgombok: ugyanazt a billentyut kuldik, mint amit a felirat mond.
-  for (const g of document.querySelectorAll('#gombok button[data-kod]')) {
-    g.addEventListener('click', (e) => { e.preventDefault(); fire(g.dataset.kod); });
-  }
-  if (gombFektet) gombFektet.addEventListener('click', async (e) => {
-    e.preventDefault();
-    await fektet();
-    gombokFrissit();
-  });
-  // Az allo-kepernyos felirat gombja is ugyanaz.
   if (gombFektet2) gombFektet2.addEventListener('click', async (e) => {
     e.preventDefault();
     await fektet();
-    gombokFrissit();
+    frissit();
   });
 
-  // Erintokepernyos eszkozon rogton latszodjanak a gombok, ne csak az elso
-  // erintes utan. Egeres gepen alapbol nem: ott a v4 ugyanaz, mint a v2.
-  // A ?erintes a cimben barhol bekapcsolja, teszteleshez es erintokepernyos
-  // laptophoz, ahol a bongeszo egeret jelent.
+  // Erintokepernyos eszkozon rogton bekapcsol. Egeres gepen alapbol nem: ott
+  // a v4 ugyanaz, mint a v2. A ?erintes a cimben barhol bekapcsolja,
+  // teszteleshez es erintokepernyos laptophoz, ahol a bongeszo egeret jelent.
   const kenyszer = new URLSearchParams(location.search).has('erintes');
   if (kenyszer || window.matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0) {
     erintesBekapcsol();
@@ -284,7 +278,7 @@ export function initErintes() {
     const most = fekvo();
     if (voltFekvo && !most && jatekban()) fire('Space');
     voltFekvo = most;
-    gombokFrissit();
+    frissit();
   });
-  gombokFrissit();
+  frissit();
 }

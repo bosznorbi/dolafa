@@ -37,23 +37,14 @@
     <div class="bot" id="bot1"><div class="talp"></div><div class="fej"></div></div>
   </div>
 
-  <!-- Sarokgombok. Mindegyik ugyanazt a billentyut kuldi, mint amit a
-       feliratuk jelent, tehat a jatek szamara nincs kulonbseg. -->
-  <nav id="gombok" aria-label="Vezérlés">
-    <div class="csoport">
-      <button type="button" data-kod="KeyZ" aria-label="Varázsmód">Z</button>
-      <button type="button" data-kod="KeyM" aria-label="Hang">M</button>
-    </div>
-    <div class="csoport">
-      <button type="button" data-kod="Space">START</button>
-      <button type="button" id="fektet" aria-label="Teljes képernyő fekve" hidden>FEKTET</button>
-    </div>
-  </nav>
+  <!-- Kulon gombsav nincs: minden, ami a jatekban ki van rajzolva (START,
+       varazspalca, hangszoro, palyavalaszto, FOLYTATAS, KILEPES), maga
+       koppinthato. Lasd src/tapint.js. -->
 
   <!-- Allo telefonon. -->
   <div id="forgasd" role="dialog" aria-live="polite">
     <div class="ikon" aria-hidden="true"></div>
-    <div><strong>Fordítsd el a telefont.</strong><br>A játék fekve megy, két hüvelykujjal.</div>
+    <div><strong>Fordítsd el a telefont</strong><br>A játék fekve működik, két hüvelykujjal irányítható</div>
     <button type="button" id="fektet2" hidden>TELJES KÉPERNYŐ FEKVE</button>
     <!-- Ahol a lap nem kerhet teljes kepernyot (iPhone Safari), ott ez a
          tanacs marad: kezdokepernyorol inditva nincs bongeszokeret. -->
