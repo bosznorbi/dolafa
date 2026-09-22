@@ -6,32 +6,66 @@ kigyulladnak tűzfészkek.
 
 Egy meccs kb. **50-65 másodperc** (best of 5).
 
+**Játszani lehet vele itt: [favago.bosz.dev](https://favago.bosz.dev)**
+
+Nincs telepítés és nincs regisztráció, böngészőben fut. Egy billentyűzeten két
+ember játszik, de gép elleni bot is van, tehát egyedül is kipróbálható.
+
 ## Három változat
 
-| | Hol | Mi ez |
+Mindhárom él, és mindegyik külön címen érhető el.
+
+| | Cím | Mi ez |
 |---|---|---|
-| **v1** | http://localhost:5173 | az első kész játék, ez a dokumentum erről szól |
-| **v2** | http://localhost:5173/v2/ | a v1 másolata + `Z` varázsmód, tíz választható pályavilággal |
-| **v3** | http://localhost:5173/v3/ | a v2 másolata + két USB SNES kontroller támogatása |
+| **v2** | [favago.bosz.dev](https://favago.bosz.dev) | ez szól a puszta címen: a v1 plusz `Z` varázsmód, tíz választható pályavilággal |
+| **v1** | [favago.bosz.dev/v1](https://favago.bosz.dev/v1) | az első kész játék, egy pályavilággal |
+| **v3** | [favago.bosz.dev/v3](https://favago.bosz.dev/v3) | a v2 plusz két USB SNES kontroller támogatása |
 
-Mindegyik külön mappa, saját README-vel ([v2](v2/README.md), [v3](v3/README.md)).
-A korábbi változatok kódját egyik sem érinti: ha itt bármi elromlik, ott ugyanaz
-a játék fut tovább.
+Az alapértelmezett változatnak szándékosan egyetlen címe van. Aki `/v2`-t üt be,
+azt egy átirányítás viszi a tiszta címre.
 
-> **Figyelem:** ez a dokumentum innentől a **v1**-ről szól, és több ponton
-> elavult a későbbi változatokhoz képest. A mérvadó leírás mindig az adott
-> változat saját README-je.
+Mindegyik külön mappa a repóban, saját README-vel ([v2](v2/README.md),
+[v3](v3/README.md)). Egyik sem érinti a korábbi változat kódját: ha az újban
+elromlik valami, a régi ugyanúgy fut tovább.
 
-## Indítás
+## Irányítás röviden
+
+Az első játékos `W` `A` `S` `D`, a második a nyilak, a `SPACE` indít és
+szüneteltet. Akciógomb nincs, csak négy irány. A v3-ban két USB SNES kontroller
+is használható.
+
+## Futtatás saját gépen
 
 ```bash
 node server.js
 ```
 
-Utána: http://localhost:5173 (a v2 pedig http://localhost:5173/v2/)
+Utána: http://localhost:5173, a v2 pedig http://localhost:5173/v2/ címen.
 
 Nincs `npm install`, nincs build, nincs függőség. A kép széltől szélig kitölti az
 ablakot, F11 alatt a teljes monitort.
+
+## Élesítés
+
+A `main` ágra tolt minden változtatás magától kikerül a
+[favago.bosz.dev](https://favago.bosz.dev) címre. A [build.mjs](build.mjs) állítja
+össze a kitett csomagot a három változatból: az alapértelmezett a gyökérbe kerül,
+a másik kettő a saját `/v1/` és `/v3/` útvonalára.
+
+## Közreműködés
+
+Ez egy személyes projekt, bemutató céllal. Pull requestet nem fogadok, de ha
+hibát találsz, nyugodtan nyiss egy issue-t.
+
+## Licenc
+
+[MIT](LICENSE), Norbert Bosz, 2026.
+
+---
+
+> Innentől a dokumentum a **v1** működését írja le részletesen, és több ponton
+> eltér a későbbi változatoktól. A mérvadó leírás mindig az adott változat saját
+> README-je.
 
 ## Irányítás
 

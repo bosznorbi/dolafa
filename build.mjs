@@ -3,17 +3,21 @@
 //   node build.mjs   ->  dist/
 //
 // MIERT KELL EZ. A repo szerkezete tortenelmi okokbol egyenetlen: a v1 a
-// gyokerben lakik, a v2 es a v3 sajat mappaban. A neten viszont mindharom
-// egyforma utvonalat kap:
+// gyokerben lakik, a v2 es a v3 sajat mappaban. A neten viszont ez lesz belole:
 //
-//   favago.bosz.dev/      ->  atiranyit a v2-re
+//   favago.bosz.dev       ->  az alapertelmezett valtozat (v2)
 //   favago.bosz.dev/v1/   ->  az elso kesz jatek
-//   favago.bosz.dev/v2/   ->  + varazsmod, tiz palyavilag
-//   favago.bosz.dev/v3/   ->  + ket USB kontroller
+//   favago.bosz.dev/v3/   ->  a ket USB kontrolleres valtozat
+//   favago.bosz.dev/v2     ->  atiranyit a puszta cimre
+//
+// Az alapertelmezett valtozat CSAK a gyokerbe kerul, nem a sajat mappajaba is.
+// Aki megis /v2-t ut be, azt egy atiranyitas viszi a tiszta cimre, tehat az
+// alapertelmezett valtozatnak egyetlen cime van, es nem marad felesleges
+// vegzodes a cimsorban. Ezt a _redirects fajl intezi, amit a Cloudflare
+// olvas ki a kitett mappabol.
 //
 // Ez a szkript CSAK a dist/ mappat irja. A repo tobbi reszehez nem nyul, tehat
-// a helyi fejlesztes valtozatlanul `node server.js`, es a harom valtozat ott
-// tovabbra is ott van, ahol eddig.
+// a helyi fejlesztes valtozatlanul `node server.js`.
 //
 // Az sem mellekes, hogy igy pontosan az kerul ki a netre, amit a jatek hasznal:
 // a README, a fejlesztoi eszkozok es a kepernyokepek itt maradnak.
@@ -33,51 +37,9 @@ const VALTOZATOK = [
   { nev: 'v3', honnan: join(ROOT, 'v3'), fajlok: ['index.html', 'css', 'src', 'favicon.svg'] },
 ];
 
-// Ide visz a puszta cim. Ha masik valtozat kell alapertelmezettnek, ezt az
-// egy sort kell atirni (es a lenti nyitolapon a szoveget).
+// Ez a valtozat szol a puszta cimen is. Masik alapertelmezetthez elég ezt
+// az egy sort atirni.
 const ALAP = 'v2';
-
-const NYITOLAP = `<!doctype html>
-<html lang="hu">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DŐL A FA</title>
-<meta http-equiv="refresh" content="0; url=/${ALAP}/">
-<link rel="icon" type="image/svg+xml" href="/${ALAP}/favicon.svg">
-<style>
-  html, body { height: 100%; margin: 0; }
-  body {
-    background: #14110f;
-    color: #e9e2d6;
-    font-family: ui-monospace, Menlo, Consolas, monospace;
-    display: flex; align-items: center; justify-content: center;
-    text-align: center; padding: 16px;
-  }
-  h1 { font-size: clamp(1.5rem, 7vw, 2.25rem); margin: 0 0 1.5rem; letter-spacing: 0.04em; }
-  p { color: #8a7f70; margin: 0 0 1.5rem; font-size: 0.9rem; }
-  nav a {
-    display: inline-block; margin: 0 0.4rem; padding: 0.5rem 1rem;
-    color: #e8a33d; border: 1px solid rgba(232, 163, 61, 0.35);
-    text-decoration: none; border-radius: 3px;
-  }
-  nav a:hover { background: rgba(232, 163, 61, 0.12); }
-</style>
-</head>
-<body>
-  <main>
-    <h1>DŐL A FA</h1>
-    <p>Átirányítás a ${ALAP} változatra…</p>
-    <nav>
-      <a href="/v1/">v1</a>
-      <a href="/v2/">v2</a>
-      <a href="/v3/">v3</a>
-    </nav>
-  </main>
-  <script>location.replace('/${ALAP}/');</script>
-</body>
-</html>
-`;
 
 async function masol(honnan, hova, fajlok) {
   await mkdir(hova, { recursive: true });
@@ -92,13 +54,33 @@ async function masol(honnan, hova, fajlok) {
   }
 }
 
+const alap = VALTOZATOK.find((v) => v.nev === ALAP);
+if (!alap) throw new Error('nincs ilyen valtozat: ' + ALAP);
+
 await rm(DIST, { recursive: true, force: true });
 
+// Az alapertelmezett valtozat a gyokerbe kerul. A jatek relativ utvonalakat
+// hasznal, ezert barmelyik melysegbol ugyanugy mukodik.
+await masol(alap.honnan, DIST, alap.fajlok);
+console.log(`  ${ALAP} a gyokerbe (ez szol a puszta cimen)`);
+
+// A tobbi valtozat a sajat mappajaba.
 for (const v of VALTOZATOK) {
+  if (v.nev === ALAP) continue;
   await masol(v.honnan, join(DIST, v.nev), v.fajlok);
   console.log(`  ${v.nev} kesz`);
 }
 
-await writeFile(join(DIST, 'index.html'), NYITOLAP, 'utf8');
+/*
+ * Aki az alapertelmezett valtozatot a sajat utvonalan uti be, azt a tiszta
+ * cimre kuldjuk. Igy annak a valtozatnak egyetlen cime van.
+ *
+ * 302, nem 301: a 301-et a bongeszo tartosan megjegyzi, es ha kesobb masik
+ * valtozat lesz az alapertelmezett, a regi latogatok beragadnanak.
+ */
+await writeFile(join(DIST, '_redirects'),
+  `/${ALAP}    /  302\n/${ALAP}/*  /  302\n`, 'utf8');
+console.log(`  _redirects: /${ALAP} -> /`);
 
-console.log(`\ndist/ osszeallt: v1, v2, v3 + nyitolap (alapertelmezett: ${ALAP})`);
+console.log(`\ndist/ osszeallt: a gyokerben a ${ALAP}, mellette `
+  + VALTOZATOK.filter((v) => v.nev !== ALAP).map((v) => '/' + v.nev + '/').join(' es '));
