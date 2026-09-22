@@ -12,7 +12,7 @@
 // A mozgo elolények szama fazisonkent legfeljebb hat, kulonben a 320x180-as
 // kepen elveszne az, ami tenyleg megol.
 
-import { W, H, CFG, mulberry32, clamp } from './config.js';
+import { W, H, CFG, mulberry32, clamp, teljesSav } from './config.js';
 import { inFire, towardSafe } from './arena.js';
 import { buildStream } from './decor-sprites.js';
 
@@ -240,7 +240,7 @@ export function drawDecorFront(c, d, S, time) {
   }
   if (d.haze > 0) {
     c.fillStyle = 'rgba(190,150,120,' + (d.haze * 0.06).toFixed(3) + ')';
-    c.fillRect(0, 0, W, H);
+    teljesSav(c);
   }
 }
 

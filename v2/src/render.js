@@ -1,6 +1,8 @@
 // Rajzolas. A jatek logika soha nem rajzol, es ez a fajl soha nem modositja az allapotot.
 
-import { W, H, CFG, PAL, TEAM, CURRENT, clamp } from './config.js';
+import {
+  W, H, CFG, PAL, TEAM, CURRENT, clamp, NEZET, teljesSav, hasabTukor,
+} from './config.js';
 import { PLAYER_SPRITE, lollyFlavour, drawSails } from './sprites.js';
 import { fallProgress, treeLen } from './trees.js';
 import { inFire, boundarySamples } from './arena.js';
@@ -38,7 +40,7 @@ function dayTint(dayT) {
 function tintRect(c, t, a) {
   if (a <= 0.004) return;
   c.fillStyle = 'rgba(' + t.r + ',' + t.g + ',' + t.b + ',' + a.toFixed(3) + ')';
-  c.fillRect(0, 0, W, H);
+  teljesSav(c);
 }
 
 /**
@@ -74,6 +76,7 @@ export function drawWorld(c, g, S, time) {
   // 1. Talaj: minden leegett, kiveve a kulso fronton belulit; a tuzfeszkek
   //    pedig visszaegetnek egy-egy foltot.
   c.drawImage(S.burnt, 0, 0);
+  hasabTukor(c, S.burnt);            // a hasabokban is leegett a talaj
   c.save();
   c.beginPath();
   poly(c, a.ptsOut);
@@ -187,7 +190,7 @@ export function drawWorld(c, g, S, time) {
   const dk = darkK(g);
   if (dk > 0) {
     c.fillStyle = 'rgba(3,2,9,' + (0.88 * dk).toFixed(3) + ')';
-    c.fillRect(0, 0, W, H);
+    teljesSav(c);
     const R = CFG.mech.bell.halo;
     for (const p of g.players) {
       if (!p.alive && p.squashT <= 0) continue;
@@ -244,7 +247,7 @@ export function drawWorld(c, g, S, time) {
         continue;
       }
       c.fillStyle = 'rgba(255,255,255,' + (0.22 * k).toFixed(3) + ')';
-      c.fillRect(0, 0, W, H);
+      teljesSav(c);
       let bx = sp.x + (Math.sin(sp.x) * 6);
       const steps = 14;
       for (let i = 0; i <= steps; i++) {
@@ -308,7 +311,7 @@ export function drawWorld(c, g, S, time) {
 
   if (g.decor) drawDecorFront(c, g.decor, S, time);
   if (g.decor) drawClouds(c, g.decor, S, dayT);
-  c.drawImage(S.vignette, 0, 0);
+  c.drawImage(S.vignette, -NEZET.ox, 0);
 }
 
 /**

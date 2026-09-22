@@ -45,6 +45,13 @@ ilyenkor névtelen sziluett áll a helyükön, és a fel-le nyíl el is tűnik. 
 is ezt mondja: **DŐL A MEGLEPETÉS**, mert a világot csak a kör indulásakor
 sorsoljuk ki.
 
+## Szélesebb képernyő
+
+A játéktér 320x180 marad, nyújtás nincs. Ha a képernyő szélesebb 16:9-nél, a
+két oldalra a világ folytatása kerül: ugyanaz a talaj, sziluett és láng, a
+sötétedő perem pedig a képernyő széléhez igazodik. Részletek a
+[repó README-jében](../README.md#szélesebb-képernyő).
+
 ## Billentyűzet-kiosztás
 
 Az input **azt nézi, ami a gombra van írva**, nem azt, hol van a gomb. Magyar

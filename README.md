@@ -28,11 +28,26 @@ azt egy átirányítás viszi a tiszta címre. A puszta cím nyitólapja dönti 
 A `?asztali` a címben gépi változatot kér telefonon is.
 
 Mindegyik külön mappa a repóban, saját README-vel ([v2](v2/README.md),
-[v3](v3/README.md), [v4](v4/README.md)).
+[v3](v3/README.md), [v4](v4/README.md)). Egyik sem érinti a korábbi változat
+kódját: ha az újban elromlik valami, a régi ugyanúgy fut tovább.
 
-Mindegyik külön mappa a repóban, saját README-vel ([v2](v2/README.md),
-[v3](v3/README.md)). Egyik sem érinti a korábbi változat kódját: ha az újban
-elromlik valami, a régi ugyanúgy fut tovább.
+## Szélesebb képernyő
+
+A játéktér mindig pontosan 320x180, és soha nincs megnyújtva: a pálya mérete,
+a sebességek és minden arány ehhez van hangolva. A mai képernyők viszont
+szélesebbek 16:9-nél, egy fekvő telefon kb. 2,6:1, és ott korábban két fekete
+hasáb maradt a széleken.
+
+Most a **vászon** lesz szélesebb, nem a kép. A játéktér középen marad, a két
+szélső sávba pedig a világ folytatása kerül: ugyanaz a talaj, ugyanazok a
+sziluettek és lángok, a sötétedő perem pedig a képernyő széléhez igazodik, nem
+a játéktéréhez. A talajt tükrözve folytatjuk, ezért a játéktér szélén nincs
+varrat. Játékbeli esemény soha nem kerül a hasábokba: a meccs a középső sávban
+dől el, a robot és a tűz nem tud róla.
+
+Kb. 2,78:1 fölött (`MAX_OX` a [config.js](v2/src/config.js)-ben) marad egy
+keskeny fekete csík. A v2 és a v4 tudja ezt, a v1 és a v3 archív, azok
+változatlanok.
 
 ## Irányítás röviden
 

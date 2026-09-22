@@ -1,6 +1,9 @@
 // HUD, menu, bannerek, lebego szovegek.
 
-import { W, H, CFG, PAL, TEAM, CURRENT, clamp } from './config.js';
+import {
+  W, H, CFG, PAL, TEAM, CURRENT, clamp,
+  NEZET, teljesSav, hasabTukor, hasabTobblet, korbe,
+} from './config.js';
 import { THEMES } from './themes.js';
 import { drawText, textWidth } from './font.js';
 import { hpFrac } from './player.js';
@@ -48,9 +51,11 @@ export function drawFloats(c) {
 
 export function drawHud(c, g, S) {
   c.fillStyle = 'rgba(8,5,3,0.42)';
-  c.fillRect(0, 0, W, 23);
+  // A sav a TELJES kepernyot atfogja, a nevek es a szivek viszont a jatekter
+  // szelen maradnak: igy a ket jatekos egyforma tavol van a kozeptol.
+  teljesSav(c, 0, 23);
   c.fillStyle = 'rgba(255,180,90,0.10)';
-  c.fillRect(0, 23, W, 1);
+  teljesSav(c, 23, 1);
 
   // A nevet a sideName() allitja ossze: szinnevesnel kell moge a tipus,
   // rendes nevnel (SZFINX, SÁMÁN) nem.
@@ -139,7 +144,7 @@ function fitScale(text, wanted) {
 
 function shade(c, a) {
   c.fillStyle = 'rgba(8,5,3,' + a + ')';
-  c.fillRect(0, 0, W, H);
+  teljesSav(c);
 }
 
 export function drawCountdown(c, g) {
@@ -389,14 +394,14 @@ function drawMysteryBackdrop(c, time) {
     const g2 = Math.round(8 + k * 10);
     const b = Math.round(26 + k * 44);
     c.fillStyle = 'rgb(' + r + ',' + g2 + ',' + b + ')';
-    c.fillRect(0, y, W, 1);
+    teljesSav(c, y, 1);
   }
 
   // Kavargo kodsavok. Lassan usznak, tehat sosem all meg a kep.
   for (let i = 0; i < 5; i++) {
     const yy = 30 + i * 28;
     c.fillStyle = 'rgba(150,110,220,' + (0.05 + (i % 2) * 0.03).toFixed(3) + ')';
-    for (let x = 0; x < W; x += 2) {
+    for (let x = -NEZET.ox; x < W + NEZET.ox; x += 2) {
       const off = Math.sin(x * 0.02 + time * (0.4 + i * 0.12) + i) * 9
         + Math.sin(x * 0.006 - time * 0.3) * 6;
       c.fillRect(x, Math.round(yy + off), 2, 14);
@@ -428,12 +433,14 @@ function drawMysteryBackdrop(c, time) {
     [9, 10, 11, 11, 10, 9, 7, 5, 3],         // gombos (nyaloka)
     [2, 4, 6, 8, 10, 12, 12, 12, 12],        // toronyszeru
   ];
-  for (let i = 0; i < 9; i++) {
-    const sh = shapes[i % shapes.length];
-    const bx = Math.round(-6 + i * (W / 8.2) + ((i * 29) % 11));
-    const baseY = H - 2 + ((i * 13) % 4);
-    const scale = 1.6 + ((i * 7) % 5) * 0.22;
-    c.fillStyle = i % 2 ? 'rgba(8,5,16,0.92)' : 'rgba(14,9,26,0.86)';
+  const koz = W / 8.2;
+  const tobb = hasabTobblet(koz);
+  for (let i = -tobb; i < 9 + tobb; i++) {
+    const sh = shapes[korbe(i, shapes.length)];
+    const bx = Math.round(-6 + i * koz + korbe(i * 29, 11));
+    const baseY = H - 2 + korbe(i * 13, 4);
+    const scale = 1.6 + korbe(i * 7, 5) * 0.22;
+    c.fillStyle = korbe(i, 2) ? 'rgba(8,5,16,0.92)' : 'rgba(14,9,26,0.86)';
     for (let r = 0; r < sh.length; r++) {
       const hw = Math.round(sh[r] * 0.5 * scale * 0.5);
       const yy = Math.round(baseY - (sh.length - r) * 3.4);
@@ -445,7 +452,7 @@ function drawMysteryBackdrop(c, time) {
   for (let i = 0; i < 26; i++) {
     const k = i / 25;
     c.fillStyle = 'rgba(140,90,220,' + (0.30 * Math.pow(k, 1.9)).toFixed(3) + ')';
-    c.fillRect(0, H - 1 - i, W, 1);
+    teljesSav(c, H - 1 - i, 1);
   }
 }
 
@@ -455,27 +462,32 @@ export function drawMenu(c, m, S, time) {
     drawMysteryBackdrop(c, time);
   } else {
     c.drawImage(S.ground, 0, 0);
+    hasabTukor(c, S.ground);
     c.fillStyle = 'rgba(10,8,6,0.68)';
-    c.fillRect(0, 0, W, H);
+    teljesSav(c);
 
     for (let i = 0; i < 40; i++) {
       const k = i / 39;
       c.fillStyle = 'rgba(' + (PAL.glow || '255,116,32') + ',' + (0.44 * Math.pow(k, 1.8)).toFixed(3) + ')';
-      c.fillRect(0, H - 1 - i, W, 1);
+      teljesSav(c, H - 1 - i, 1);
     }
+    // A sziluett-sor ugyanazzal a kozzel fut tovabb a hasabokba: se surubb,
+    // se ritkabb nem lesz a szelen, csak hosszabb a sor.
     for (let layer = 0; layer < 2; layer++) {
       const n = layer === 0 ? 11 : 13;
-      for (let i = 0; i < n; i++) {
-        const spr = S.trees[(i * 3 + layer) % S.trees.length];
-        const x = Math.round(-8 + i * (W / (n - 1.2)) + ((i * 37 + layer * 19) % 9));
-        const y = H - (layer === 0 ? 6 : 0) - Math.round(spr.h * 0.62) + ((i * 13 + layer * 7) % 5);
+      const koz = W / (n - 1.2);
+      const tobb = hasabTobblet(koz);
+      for (let i = -tobb; i < n + tobb; i++) {
+        const spr = S.trees[korbe(i * 3 + layer, S.trees.length)];
+        const x = Math.round(-8 + i * koz + korbe(i * 37 + layer * 19, 9));
+        const y = H - (layer === 0 ? 6 : 0) - Math.round(spr.h * 0.62) + korbe(i * 13 + layer * 7, 5);
         c.globalAlpha = layer === 0 ? 0.55 : 1;
         c.drawImage(spr.sil, x, y);
         c.globalAlpha = 1;
       }
     }
     const f = S.flames;
-    for (let x = -2; x < W + 4; x += 4) {
+    for (let x = -2 - NEZET.ox; x < W + NEZET.ox + 4; x += 4) {
       const fr = (Math.floor(time * 15 + x * 0.7) % f.frames.length + f.frames.length) % f.frames.length;
       c.drawImage(f.frames[fr], x, H - f.h + 3);
     }
@@ -542,7 +554,7 @@ function drawSparkles(c, time) {
   for (let b = 0; b < 3; b++) {
     const hue = (time * 26 + b * 110) % 360;
     c.fillStyle = 'hsla(' + hue.toFixed(0) + ',80%,60%,0.10)';
-    for (let x = 0; x < W; x += 2) {
+    for (let x = -NEZET.ox; x < W + NEZET.ox; x += 2) {
       const y = 26 + b * 9
         + Math.sin(x * 0.035 + time * (0.9 + b * 0.25) + b) * 7
         + Math.sin(x * 0.011 - time * 0.6) * 4;
@@ -554,7 +566,7 @@ function drawSparkles(c, time) {
     const sx = (i * 71 % 317) / 317;
     const sy = (i * 53 % 211) / 211;
     const sp = 0.25 + (i % 5) * 0.09;
-    const x = Math.round(((sx + time * sp * 0.05) % 1) * W);
+    const x = Math.round(((sx + time * sp * 0.05) % 1) * NEZET.w) - NEZET.ox;
     const y = Math.round(((sy - time * sp * 0.03) % 1 + 1) % 1 * (H - 30)) + 4;
     const tw = Math.sin(time * (2 + (i % 7) * 0.4) + i);
     if (tw < 0.1) continue;
