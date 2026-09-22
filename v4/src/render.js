@@ -187,22 +187,35 @@ export function drawWorld(c, g, S, time) {
   // HARANGSZÓ: a palya sotetbe borul. A sirkovek szinte eltunnek, a ket
   // favago korul viszont marad egy kis derengés, es ujra kirajzoljuk oket,
   // tehat latszanak - de csak ok.
+  //
+  // A zarokep FUTOJA is idetartozik: ha a meccs epp harangszo kozben dolt
+  // el, nelkule lathatatlanul futna be a menedekbe.
   const dk = darkK(g);
   if (dk > 0) {
     c.fillStyle = 'rgba(3,2,9,' + (0.88 * dk).toFixed(3) + ')';
     teljesSav(c);
     const R = CFG.mech.bell.halo;
+    const derengok = [];
     for (const p of g.players) {
-      if (!p.alive && p.squashT <= 0) continue;
+      if (p.alive || p.squashT > 0) derengok.push(p);
+    }
+    if (g.outroRunner) derengok.push(g.outroRunner);
+    for (const p of derengok) {
       const gr = c.createRadialGradient(p.x, p.y - 8, 0, p.x, p.y - 8, R);
       gr.addColorStop(0, 'rgba(150,120,200,' + (0.4 * dk).toFixed(3) + ')');
       gr.addColorStop(1, 'rgba(150,120,200,0)');
       c.fillStyle = gr;
       c.fillRect(p.x - R, p.y - 8 - R, R * 2, R * 2);
     }
+    // Sotetben a favago SZELLEM: atmegy a sirkoveken, es atsejlik rajta a
+    // hatter. Az attetszoseg a sotetseggel egyutt no, tehat ugyanaz a
+    // pillanat mutatja meg, amikor a ko mar nem allitja meg.
+    c.globalAlpha = 1 - 0.45 * dk;
     for (const p of g.players) {
       if (p.alive || p.squashT > 0) drawPlayer(c, p, S, g, time);
     }
+    if (g.outroRunner) drawRunner(c, g.outroRunner, S);
+    c.globalAlpha = 1;
   }
 
   // 7. A szereplok folott csak enyhe szinezes, hogy ejszaka is lassuk oket.

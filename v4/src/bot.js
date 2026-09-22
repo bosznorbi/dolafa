@@ -5,6 +5,7 @@
 import { CFG, DIRS, TREE_KINDS } from './config.js';
 import { inFire, fireProximity, towardSafe } from './arena.js';
 import { treeLen, hitsPlayer, inHitZone } from './trees.js';
+import { ghostNow } from './mechanics.js';
 
 const STAND = 10;
 
@@ -111,6 +112,13 @@ export function updateBot(p, dt, g) {
   const foe = g.players[1 - p.index];
   const a = g.arena;
 
+  // SZELLEM-MOD a temetoben. A harangszo sotetjeben a robot is atmegy a
+  // sirkoveken, tehat egy csapasra barhonnan elerne a masikat. Visszafogjuk:
+  // rovidebb tavolsagrol indit rohamot, es a kondulas utan tetovazik egy
+  // pillanatot. Igy nem a harangszo donti el a meccset.
+  const szellem = ghostNow(g);
+  p.botGhostT = szellem ? (p.botGhostT || 0) + dt : 0;
+
   // 1. Kiteres a dolo fa alol, illetve a MEG csak vagott fa arnyekabol.
   //    Ez utobbi az, amit egy jo jatekos is csinal: olvassa az elorejelzest.
   const danger = dodgeVector(p, g, skill) || dodgePreview(p, g, skill);
@@ -150,8 +158,9 @@ export function updateBot(p, dt, g) {
     const dx = foe.x - p.x;
     const dy = foe.y - p.y;
     const dist = Math.hypot(dx, dy * 1.4);
+    const rohamTav = szellem ? 30 : 54;
     let charge = false;
-    if (dist < 54) {
+    if (dist < rohamTav && (!szellem || p.botGhostT > 0.8)) {
       const fd = DIRS[foe.dir] || [0, 1];
       const l = Math.hypot(dx, dy) || 1;
       charge = (fd[0] * -dx + fd[1] * -dy) / l < 0.3;

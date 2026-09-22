@@ -3,7 +3,9 @@
 import { W, H, CFG, TEAM, clamp, bellRange, DIRS } from './config.js';
 import { getInput } from './input.js';
 import { chopBy, chopBlocked, baseRect } from './trees.js';
-import { speedMul, moveRates, chopBlockedNow, darkMeleeBonus } from './mechanics.js';
+import {
+  speedMul, moveRates, chopBlockedNow, darkMeleeBonus, ghostNow,
+} from './mechanics.js';
 
 export const PW = 10;
 export const PH = 6;
@@ -81,12 +83,34 @@ function overlap(a, b) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y;
 }
 
+/** Mekkora az atfedes szelessege a megadott tengelyen. Nulla, ha nincs. */
+function atfedes(a, b, t) {
+  const m = t === 'x' ? 'w' : 'h';
+  return Math.min(a[t] + a[m], b[t] + b[m]) - Math.max(a[t], b[t]);
+}
+
+/*
+ * BENNSZORULAS. Rendes esetben a favago sosem kerul egy sirko BELSEJEBE: az
+ * utkozes a ko szelere allitja. A temetoi harangszo alatt viszont szellemkent
+ * atmehet rajta, es amikor kivilagosodik, ott all, ahol epp jart.
+ *
+ * Ilyenkor NEM penderitjuk at a tulso oldalra (az egy fel ko szelessegnyi
+ * ugras lenne, a semmibol). Helyette annyit engedunk, ami KIFELE visz: aki
+ * bennszorult, kikecmereghet, de beljebb nem mehet. Ha korbe van veve
+ * kovekkel, marad a fejsze: a sirkovet, amiben all, ki tudja vagni.
+ */
 function moveX(p, dx, rects) {
   if (!dx) return;
+  const x0 = p.x;
+  const r0 = rectOf(p);
   p.x += dx;
   const r = rectOf(p);
   for (const s of rects) {
     if (!overlap(r, s)) continue;
+    if (overlap(r0, s)) {
+      if (atfedes(r, s, 'x') > atfedes(r0, s, 'x')) { p.x = x0; r.x = p.x - PW / 2; }
+      continue;
+    }
     p.x = dx > 0 ? s.x - PW / 2 : s.x + s.w + PW / 2;
     r.x = p.x - PW / 2;
   }
@@ -94,10 +118,16 @@ function moveX(p, dx, rects) {
 
 function moveY(p, dy, rects) {
   if (!dy) return;
+  const y0 = p.y;
+  const r0 = rectOf(p);
   p.y += dy;
   const r = rectOf(p);
   for (const s of rects) {
     if (!overlap(r, s)) continue;
+    if (overlap(r0, s)) {
+      if (atfedes(r, s, 'y') > atfedes(r0, s, 'y')) { p.y = y0; r.y = p.y - PH; }
+      continue;
+    }
     p.y = dy > 0 ? s.y : s.y + s.h + PH;
     r.y = p.y - PH;
   }
@@ -186,7 +216,9 @@ export function updatePlayer(p, dt, g) {
   if (Math.abs(p.kx) < 1) p.kx = 0;
   if (Math.abs(p.ky) < 1) p.ky = 0;
 
-  const rects = g.solids;
+  // Szellem-modban (temetoi harangszo) csak az epuletek allitjak meg: a
+  // sirkoveken atmegy. Lasd ghostNow().
+  const rects = ghostNow(g) ? g.epuletek : g.solids;
   moveX(p, (p.vx + p.kx) * dt, rects);
   moveY(p, (p.vy + p.ky) * dt, rects);
 

@@ -86,7 +86,7 @@ nem kap semmit: az a tiszta alapjáték, amihez a többit mérni lehet.
 | Pálya | Mechanika | Mit csinál |
 |---|---|---|
 | ERDŐ | - | tiszta alapjáték |
-| TEMETŐ | kísértetjárás | a kidőlt sírkő helyén szipolyozó folt marad |
+| TEMETŐ | harangszó és szellem-mód | időnként megkondul a harang, sötétbe borul a pálya, és amíg tart, a két favágó szellemként átmegy a sírköveken |
 | SIVATAG | széllökés | időnként végigsöpör egy lökés, és elsodor mindenkit |
 | JÉGMEZŐ | csúszás + repedés | lassan gyorsulsz és sokáig kicsúszol; ahova oszlop dőlt, ott megreped a jég, és aki sokáig áll rajta, beszakad alatta |
 | IDEGEN BOLYGÓ | lökéshullám + süllyedés | a kidöntött kristály ellöki a másikat, majd lassan elmerül a talajban, és utána át lehet sétálni rajta |
@@ -96,6 +96,33 @@ nem kap semmit: az a tiszta alapjáték, amihez a többit mérni lehet.
 
 A dominó láncot végigmértem: átlagosan 1,24 lap dől el egy saját vágásra, a
 leghosszabb hullám 11 lap volt, és 12 meccs alatt 5 halált okozott.
+
+### Harangszó és szellem-mód (temető)
+
+A kör elején 1,8 másodperccel, utána 4,6 másodpercenként **megkondul a
+harang**, és 3,6 másodpercre sötétbe borul a pálya. A sötétedés lassú (0,95
+mp), a kivilágosodás gyors (0,3 mp): a fenyegetés épül, a megkönnyebbülés
+egy pillanat.
+
+Amíg sötét van:
+
+- **vágni nem lehet**, mert nem látod, mit csinálsz;
+- a fejsze viszont **nagyobbat üt** (+3), mert vakon egymásnak menni kockázatosabb;
+- a két favágó **szellem**: átmegy a sírköveken, és átsejlik rajta a háttér.
+
+A szellem-mód a lényeg: sírkő többé nem áll a párbaj útjába, és bárhonnan
+bárhová el lehet jutni. A menedék és a harangtorony viszont marad, azokon
+szellemként sem lehet átsétálni.
+
+Amikor kivilágosodik, **a kő újra kő**. Aki épp egy sírkő belsejében áll, ott
+ragad: beljebb nem mehet, kifelé viszont kikecmereghet, és onnantól nem tud
+visszalépni. Aki sírkövek közé szorult, a fejszéjével vágja ki magát. Nincs
+átpenderítés a kő túlsó oldalára: ahol a fény éri, ott van.
+
+A robot is szellem, de **visszafogottan**: sötétben csak 30 pixelen belülről
+indít rohamot (világosban 54), és a kondulás után vár egy pillanatot. Így nem
+a harangszó dönti el a meccset.
+
 
 ## Ambiens hang
 

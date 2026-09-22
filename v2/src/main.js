@@ -80,6 +80,9 @@ const g = {
     makePlayer(1, SPAWNS[1].x, SPAWNS[1].y, false),
   ],
   solids: [],
+  // A menedek es a harangtorony kulon is: ezeken a temetoi harangszo
+  // szellem-modjaban sem lehet atmenni. Lasd ghostNow().
+  epuletek: [],
   shake: 0,
   emberT: 0,
   seedCount: 0,
@@ -299,9 +302,7 @@ function newRound() {
   g.decor = makeDecor(g.seed, g.arena, g.round, g.trees, stream);
   resetPlayer(g.players[0], SPAWNS[0].x, SPAWNS[0].y);
   resetPlayer(g.players[1], SPAWNS[1].x, SPAWNS[1].y);
-  g.solids = solidRects(g.trees);
-  if (g.cabin) g.solids.push(cabinRect(g.cabin));
-  if (g.tower) g.solids.push(towerRect(g.tower));
+  rakjSolids();
   FX.clearParticles();
   clearFloats();
   resetMech(g);
@@ -346,6 +347,19 @@ function pickCabin(seed, spawns, streamPts) {
 /** A harangtorony utkozo-doboza: a talapzata. */
 function towerRect(tw) {
   return { x: tw.x - 8, y: tw.y - 6, w: 16, h: 6 };
+}
+
+/**
+ * Az utkozo-dobozok ujraszamolasa. Ket lista keszul: a teljes (minden, ami
+ * megallitja a favagot), es kulon az epuletek. A temetoi harangszo alatt a
+ * jatekos atmegy a sirkoveken, de az epuleteken nem, es ilyenkor csak ezt a
+ * rovidebb listat kapja. Lasd ghostNow() a mechanics.js-ben.
+ */
+function rakjSolids() {
+  g.epuletek = [];
+  if (g.cabin) g.epuletek.push(cabinRect(g.cabin));
+  if (g.tower) g.epuletek.push(towerRect(g.tower));
+  g.solids = solidRects(g.trees).concat(g.epuletek);
 }
 
 /** A menedek utkozo-doboza: a falak talpa. */
@@ -532,9 +546,7 @@ function update(dt) {
     g.shake = Math.max(g.shake, 3);
   }
 
-  g.solids = solidRects(g.trees);
-  if (g.cabin) g.solids.push(cabinRect(g.cabin));
-  if (g.tower) g.solids.push(towerRect(g.tower));
+  rakjSolids();
 
   for (const p of g.players) if (p.isBot) updateBot(p, dt, g);
   // Valtakozo sorrend: igy a fa-foglalasnal sincs allando elonye annak,
@@ -672,9 +684,7 @@ function update(dt) {
           Object.assign({ life: 1.4 }, floatColors(ev.p)));
       }
     } else if (ev.type === 'sunk') {
-      g.solids = solidRects(g.trees);
-      if (g.cabin) g.solids.push(cabinRect(g.cabin));
-      if (g.tower) g.solids.push(towerRect(g.tower));
+      rakjSolids();
     } else if (ev.type === 'died') {
       sfx.hurt();
       FX.blood(ev.p.x, ev.p.y - 10, ev.p.team.tint);

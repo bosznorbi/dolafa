@@ -561,6 +561,22 @@ export function darkK(g) {
  * latni kell, mit csinalsz; a kozelharchoz eleg, hogy egymasnak menjetek.
  */
 export function chopBlockedNow(g) {
+  return ghostNow(g);
+}
+
+/**
+ * SZELLEM-MOD. A harangszo sotetjeben a ket favago atmegy a sirkoveken.
+ *
+ * Ugyanaz a hatar, mint a vagas tiltasanal, es ez szandekos: amig szellem
+ * vagy, nem tudsz vagni, viszont barhova eljutsz es barhol verekedhetsz.
+ * Amikor kivilagosodik, a ko ujra ko: aki epp egy sirko belsejeben all,
+ * ott ragad, es ki kell kecmeregnie (vagy kivagnia magat).
+ *
+ * A menedek es a harangtorony NEM ilyen: azokon szellemkent sem lehet
+ * atmenni. Az egyik a zarokep hazikoja, a masik maga a harang: ha
+ * atsetalhatnal rajtuk, egyik sem lenne hely tobbe, csak rajz.
+ */
+export function ghostNow(g) {
   return hasMech('bell') && darkK(g) > 0.45;
 }
 

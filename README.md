@@ -260,8 +260,8 @@ mert a zárókép alatt már nem fut a teljes mechanika, és a győztes láthata
 futott be a menedékbe. Most a fény a kivilágosodás rendes ideje alatt visszajön,
 tehát a futás végig látszik.
 
-
-**A menedék szilárd akadály**, nem lehet átmenni rajta, és nem kerül a patak partjára.
+**A menedék szilárd akadály**, nem lehet átmenni rajta (a temetői szellem-módban
+sem), és nem kerül a patak partjára.
 Fair-figyelmeztetés: egyetlen, véletlen helyű akadály elvileg megtöri a középpontos
 tükrözést, tehát az egyik játékos kaphat egy kicsivel jobb fedezéket. Mivel csak a
 döntő körben van jelen, és a mérés nem mutatott elfogultságot, így hagytuk. Ha
